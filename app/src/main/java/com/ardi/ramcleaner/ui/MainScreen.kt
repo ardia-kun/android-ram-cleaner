@@ -87,7 +87,7 @@ fun MainScreen(
             AccessCard(state, onRefreshAccess, onRequestShizuku)
             RamCard(state, onCleanRam)
             CacheCard(state, onCleanCacheSelected, onCleanCacheAll, onIncludeSystem,
-                onSelectAll, onClearSelection)
+                onSelectAll, onClearSelection, onToggleSelect)
             AutoCard(state, onAutoEnabled, onInterval, onAutoRam, onAutoCache)
             LogCard(state)
             Spacer(Modifier.height(24.dp))
@@ -183,6 +183,7 @@ private fun CacheCard(
     onIncludeSystem: (Boolean) -> Unit,
     onSelectAll: () -> Unit,
     onClearSelection: () -> Unit,
+    onToggleSelect: (String) -> Unit,
 ) {
     Card {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {

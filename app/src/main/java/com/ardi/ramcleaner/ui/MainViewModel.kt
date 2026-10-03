@@ -36,7 +36,6 @@ data class UiState(
     val selected: Set<String> = emptySet(),
     val includeSystem: Boolean = false,
     val busy: Boolean = false,
-    val log: List<String> = emptyList(),
     val autoEnabled: Boolean = false,
     val intervalMin: Int = 180,
     val autoRam: Boolean = true,
@@ -68,8 +67,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         refreshAccess()
     }
 
+    /** Catat aktivitas ke Logcat (tidak ditampilkan di UI). */
     private fun log(line: String) {
-        _state.value = _state.value.copy(log = (_state.value.log + line).takeLast(200))
+        android.util.Log.d("RamCleaner", line)
     }
 
     // ------------------------------------------------------------- akses/backend

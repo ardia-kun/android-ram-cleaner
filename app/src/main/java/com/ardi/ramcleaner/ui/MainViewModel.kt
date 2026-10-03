@@ -173,6 +173,38 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /**
+     * Tombol utama: bersihkan RAM + cache semua aplikasi sekaligus.
+     *
+     * Pada Android < 13, bagian cache otomatis dilewati oleh engine (demi keamanan),
+     * sehingga RAM tetap dibersihkan.
+     */
+    fun cleanEverything() {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(busy = true)
+            log("Bersihkan semuanya: RAM + cache…")
+
+            // 1) RAM (kill-all + force-stop app terpilih)
+            val forced = _state.value.selected.toList()
+            val ramRep = withContext(Dispatchers.IO) { engine.clearRam(forced) }
+
+            // 2) Cache semua app user
+            val targets = _state.value.apps.map { it.packageName }
+            val cacheRep = if (targets.isEmpty()) null
+            else withContext(Dispatchers.IO) { engine.clearCache(targets) }
+
+            val (total, avail) = withContext(Dispatchers.IO) { engine.ramInfo() }
+            _state.value = _state.value.copy(busy = false, ramTotal = total, ramAvail = avail)
+
+            if (ramRep.freedBytes >= 0) log("RAM dibebaskan: ${fmt(ramRep.freedBytes)}")
+            cacheRep?.let {
+                log(it.message)
+                if (it.freedBytes >= 0) log("Ruang cache dibebaskan: ${fmt(it.freedBytes)}")
+            }
+            refreshData()
+        }
+    }
+
     /** Bersihkan cache paket terpilih (Android 13+) atau semua app user. */
     fun clearCache(selectedOnly: Boolean) {
         viewModelScope.launch {

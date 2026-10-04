@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 108 108">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFF0F6"/>
+      <stop offset="0.55" stop-color="#FFE3EC"/>
+      <stop offset="1" stop-color="#FFD9B8"/>
+    </linearGradient>
+  </defs>
+  <rect width="108" height="108" fill="url(#bg)"/>
+
+  <g transform="translate(54,54) scale(0.74) translate(-54,-54)">
+    <path fill="#16162A" d="M54,27 C39,27 31,38 31,53 C31,66 29,77 27,88 L81,88 C79,77 77,66 77,53 C77,38 69,27 54,27 Z"/>
+    <path fill="#2E2E52" d="M42,36 C47,31 61,31 66,36 C59,33 49,33 42,36 Z"/>
+
+    <path fill="#FFF4F8" d="M30,88 C34,77 43,73 54,73 C65,73 74,77 78,88 Z"/>
+    <path fill="none" stroke="#F3AFC8" stroke-width="1.7" stroke-linejoin="round" d="M45,74 L54,83 L63,74"/>
+
+    <path fill="#F7C6A4" d="M49,67 L59,67 L59,79 L49,79 Z"/>
+
+    <path fill="#FFE4C9" d="M54,34 C45,34 39,41 39,52 C39,63 46,71 54,71 C62,71 69,63 69,52 C69,41 63,34 54,34 Z"/>
+
+    <path fill="#1B1B33" d="M37,53 C35,37 44,29 54,29 C64,29 73,37 71,53 C69,43 64,39 54,39 C44,39 39,43 37,53 Z"/>
+    <path fill="#1B1B33" d="M38,45 C34,54 34,64 37,73 C33,64 33,53 38,45 Z"/>
+    <path fill="#1B1B33" d="M70,45 C74,54 74,64 71,73 C75,64 75,53 70,45 Z"/>
+
+    <path fill="#F7A8B8" opacity="0.7" d="M39.8,62 a3.2,1.7 0 1,0 6.4,0 a3.2,1.7 0 1,0 -6.4,0 Z"/>
+    <path fill="#F7A8B8" opacity="0.7" d="M61.8,62 a3.2,1.7 0 1,0 6.4,0 a3.2,1.7 0 1,0 -6.4,0 Z"/>
+
+    <path fill="none" stroke="#4A3030" stroke-width="1.3" stroke-linecap="round" d="M42,47 C45,45 47,45 49,46"/>
+    <path fill="none" stroke="#4A3030" stroke-width="1.3" stroke-linecap="round" d="M59,46 C61,45 63,45 66,47"/>
+
+    <path fill="#FFFFFF" d="M40.5,57 a5.2,6.1 0 1,0 10.4,0 a5.2,6.1 0 1,0 -10.4,0 Z"/>
+    <path fill="#E8A020" d="M42,57.5 a3.7,4.6 0 1,0 7.4,0 a3.7,4.6 0 1,0 -7.4,0 Z"/>
+    <path fill="#2A1A0A" d="M43.6,57.5 a1.9,2.5 0 1,0 3.8,0 a1.9,2.5 0 1,0 -3.8,0 Z"/>
+    <path fill="#FFFFFF" d="M42.6,54.7 a1.3,1.3 0 1,0 2.6,0 a1.3,1.3 0 1,0 -2.6,0 Z"/>
+    <path fill="none" stroke="#1B1B33" stroke-width="1.6" stroke-linecap="round" d="M40.4,53.6 C43,50.7 48,50.7 50.7,53.6"/>
+
+    <path fill="#FFFFFF" d="M57.1,57 a5.2,6.1 0 1,0 10.4,0 a5.2,6.1 0 1,0 -10.4,0 Z"/>
+    <path fill="#E8A020" d="M58.6,57.5 a3.7,4.6 0 1,0 7.4,0 a3.7,4.6 0 1,0 -7.4,0 Z"/>
+    <path fill="#2A1A0A" d="M60.2,57.5 a1.9,2.5 0 1,0 3.8,0 a1.9,2.5 0 1,0 -3.8,0 Z"/>
+    <path fill="#FFFFFF" d="M59.2,54.7 a1.3,1.3 0 1,0 2.6,0 a1.3,1.3 0 1,0 -2.6,0 Z"/>
+    <path fill="none" stroke="#1B1B33" stroke-width="1.6" stroke-linecap="round" d="M57.3,53.6 C60,50.7 65,50.7 67.6,53.6"/>
+
+    <path fill="none" stroke="#C4636E" stroke-width="1.3" stroke-linecap="round" d="M51,65.5 Q54,67.6 57,65.5"/>
+
+    <path fill="#F5B301" d="M73,37 C68.5,32.5 64.5,35.5 67.5,39.5 C69.5,41.5 72,40.5 73,38.5 Z"/>
+    <path fill="#F5B301" d="M74,37 C78.5,32.5 82.5,35.5 79.5,39.5 C77.5,41.5 75,40.5 74,38.5 Z"/>
+    <path fill="#FFD95E" d="M73,39 C69.5,42 69.5,45 71.5,45 C73,45 73,43 73,41 Z"/>
+    <path fill="#FFD95E" d="M74,39 C77.5,42 77.5,45 75.5,45 C74,45 74,43 74,41 Z"/>
+    <path fill="#7A5200" d="M73.2,35.5 L73.8,35.5 L73.6,41 L73.4,41 Z"/>
+  </g>
+
+  <circle cx="54" cy="54" r="36" fill="none" stroke="#FF0000" stroke-width="0.7" opacity="0.85"/>
+  <circle cx="54" cy="54" r="33" fill="none" stroke="#0066FF" stroke-width="0.7" opacity="0.85"/>
+</svg>

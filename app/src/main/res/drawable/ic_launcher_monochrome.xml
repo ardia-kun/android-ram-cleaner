@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Versi satu warna untuk ikon bertema (Android 13+). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.74"
+        android:scaleY="0.74">
+
+        <!-- rambut belakang -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M54,27C39,27 31,38 31,53C31,66 29,77 27,88L81,88C79,77 77,66 77,53C77,38 69,27 54,27Z" />
+        <!-- wajah (dilubangi dari siluet rambut) -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M54,34C45,34 39,41 39,52C39,63 46,71 54,71C62,71 69,63 69,52C69,41 63,34 54,34Z" />
+        <!-- badan -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M30,88C34,77 43,73 54,73C65,73 74,77 78,88Z" />
+        <!-- kupu-kupu -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M73,37C68.5,32.5 64.5,35.5 67.5,39.5C69.5,41.5 72,40.5 73,38.5Z" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M74,37C78.5,32.5 82.5,35.5 79.5,39.5C77.5,41.5 75,40.5 74,38.5Z" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M73,39C69.5,42 69.5,45 71.5,45C73,45 73,43 73,41Z" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M74,39C77.5,42 77.5,45 75.5,45C74,45 74,43 74,41Z" />
+    </group>
+</vector>

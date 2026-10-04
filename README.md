@@ -57,8 +57,8 @@ Aplikasi ini **mendukung keduanya** dan otomatis memilih yang tersedia
 
 ```
 app/src/main/
-├── aidl/com/ardi/ramcleaner/ICleanerService.aidl   # kontrak UserService (Shizuku)
-├── java/com/ardi/ramcleaner/
+├── aidl/com/kidz/cleaner/ICleanerService.aidl   # kontrak UserService (Shizuku)
+├── java/com/kidz/cleaner/
 │   ├── backend/
 │   │   ├── ShellRunner.kt        # interface + AccessMode + auto-detect
 │   │   ├── ShizukuRunner.kt      # jalankan shell via Shizuku (UserService)

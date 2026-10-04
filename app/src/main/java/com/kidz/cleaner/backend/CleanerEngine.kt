@@ -1,8 +1,8 @@
-package com.ardi.ramcleaner.backend
+package com.kidz.cleaner.backend
 
 import android.content.Context
 import android.content.pm.PackageManager
-import com.ardi.ramcleaner.data.Aggressiveness
+import com.kidz.cleaner.data.Aggressiveness
 import java.util.concurrent.TimeUnit
 
 /** Status satu aplikasi terkait debloat. */

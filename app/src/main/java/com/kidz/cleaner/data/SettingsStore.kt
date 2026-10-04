@@ -1,4 +1,4 @@
-package com.ardi.ramcleaner.data
+package com.kidz.cleaner.data
 
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey

@@ -1,7 +1,7 @@
 // AIDL untuk UserService Shizuku.
 // UserService = kode kita yang dijalankan Shizuku dengan identitas shell (uid 2000)
 // atau root (uid 0) — inilah cara resmi Shizuku API v13 untuk menjalankan perintah.
-package com.ardi.ramcleaner;
+package com.kidz.cleaner;
 
 interface ICleanerService {
 

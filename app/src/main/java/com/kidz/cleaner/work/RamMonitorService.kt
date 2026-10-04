@@ -1,4 +1,4 @@
-package com.ardi.ramcleaner.work
+package com.kidz.cleaner.work
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -11,12 +11,12 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
-import com.ardi.ramcleaner.R
-import com.ardi.ramcleaner.backend.CleanerEngine
-import com.ardi.ramcleaner.backend.ShellRunner
-import com.ardi.ramcleaner.data.Aggressiveness
-import com.ardi.ramcleaner.data.AutoMode
-import com.ardi.ramcleaner.data.SettingsStore
+import com.kidz.cleaner.R
+import com.kidz.cleaner.backend.CleanerEngine
+import com.kidz.cleaner.backend.ShellRunner
+import com.kidz.cleaner.data.Aggressiveness
+import com.kidz.cleaner.data.AutoMode
+import com.kidz.cleaner.data.SettingsStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -184,8 +184,8 @@ class RamMonitorService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     companion object {
-        const val ACTION_START = "com.ardi.ramcleaner.START_MONITOR"
-        const val ACTION_STOP = "com.ardi.ramcleaner.STOP_MONITOR"
+        const val ACTION_START = "com.kidz.cleaner.START_MONITOR"
+        const val ACTION_STOP = "com.kidz.cleaner.STOP_MONITOR"
         private const val CHANNEL_MONITOR = "ram_monitor"
         private const val NOTIF_ID = 2001
 

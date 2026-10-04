@@ -1,9 +1,9 @@
-package com.ardi.ramcleaner.work
+package com.kidz.cleaner.work
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.ardi.ramcleaner.data.SettingsStore
+import com.kidz.cleaner.data.SettingsStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -21,7 +21,7 @@ class BootReceiver : BroadcastReceiver() {
                     Scheduler.schedule(context.applicationContext, settings.intervalMin.first())
                 }
                 // Lanjutkan pemantau RAM otomatis bila sebelumnya aktif.
-                if (settings.ramAutoMode.first() != com.ardi.ramcleaner.data.AutoMode.OFF) {
+                if (settings.ramAutoMode.first() != com.kidz.cleaner.data.AutoMode.OFF) {
                     RamMonitorService.start(context.applicationContext)
                 }
             } finally {

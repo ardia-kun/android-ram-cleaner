@@ -1,4 +1,4 @@
-package com.ardi.ramcleaner.work
+package com.kidz.cleaner.work
 
 import android.content.Context
 import androidx.work.Constraints

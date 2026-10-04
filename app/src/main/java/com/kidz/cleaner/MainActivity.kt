@@ -1,4 +1,4 @@
-package com.ardi.ramcleaner
+package com.kidz.cleaner
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -6,9 +6,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import com.ardi.ramcleaner.ui.MainScreen
-import com.ardi.ramcleaner.ui.MainViewModel
-import com.ardi.ramcleaner.ui.theme.RamCleanerTheme
+import com.kidz.cleaner.ui.MainScreen
+import com.kidz.cleaner.ui.MainViewModel
+import com.kidz.cleaner.ui.theme.RamCleanerTheme
 import rikka.shizuku.Shizuku
 
 class MainActivity : ComponentActivity() {
@@ -29,7 +29,7 @@ class MainActivity : ComponentActivity() {
         runCatching { Shizuku.addRequestPermissionResultListener(permissionListener) }
 
         // Siapkan channel notifikasi & minta izin (Android 13+).
-        com.ardi.ramcleaner.work.Notifier.ensureChannel(this)
+        com.kidz.cleaner.work.Notifier.ensureChannel(this)
         requestNotificationPermission()
 
         setContent {

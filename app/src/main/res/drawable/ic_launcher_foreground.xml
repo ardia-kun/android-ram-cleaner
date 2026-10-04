@@ -1,14 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Ikon app: karakter anime "Reirin" (Kou Reirin — Though I Am an Inept Villainess):
+  rambut hitam panjang, mata emas, dan kupu-kupu (julukan "Butterfly").
+  Konten diletakkan dalam group berskala 0.74 di sekitar titik tengah agar seluruh
+  karakter masuk ke safe zone adaptive icon (lingkaran r=33 dari 108).
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Sparkle besar -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M54,26 L60,48 L82,54 L60,60 L54,82 L48,60 L26,54 L48,48 Z" />
-    <!-- Sparkle kecil -->
-    <path
-        android:fillColor="#B9F5D0"
-        android:pathData="M79,27 L81,35 L89,37 L81,39 L79,47 L77,39 L69,37 L77,35 Z" />
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.74"
+        android:scaleY="0.74">
+
+        <!-- rambut belakang -->
+        <path
+            android:fillColor="#16162A"
+            android:pathData="M54,27C39,27 31,38 31,53C31,66 29,77 27,88L81,88C79,77 77,66 77,53C77,38 69,27 54,27Z" />
+        <!-- kilau rambut -->
+        <path
+            android:fillColor="#2E2E52"
+            android:pathData="M42,36C47,31 61,31 66,36C59,33 49,33 42,36Z" />
+
+        <!-- badan / kimono -->
+        <path
+            android:fillColor="#FFF4F8"
+            android:pathData="M30,88C34,77 43,73 54,73C65,73 74,77 78,88Z" />
+        <path
+            android:fillColor="#00000000"
+            android:pathData="M45,74L54,83L63,74"
+            android:strokeColor="#F3AFC8"
+            android:strokeLineJoin="round"
+            android:strokeWidth="1.7" />
+
+        <!-- leher -->
+        <path
+            android:fillColor="#F7C6A4"
+            android:pathData="M49,67L59,67L59,79L49,79Z" />
+
+        <!-- wajah -->
+        <path
+            android:fillColor="#FFE4C9"
+            android:pathData="M54,34C45,34 39,41 39,52C39,63 46,71 54,71C62,71 69,63 69,52C69,41 63,34 54,34Z" />
+
+        <!-- poni -->
+        <path
+            android:fillColor="#1B1B33"
+            android:pathData="M37,53C35,37 44,29 54,29C64,29 73,37 71,53C69,43 64,39 54,39C44,39 39,43 37,53Z" />
+        <!-- rambut sisi kiri -->
+        <path
+            android:fillColor="#1B1B33"
+            android:pathData="M38,45C34,54 34,64 37,73C33,64 33,53 38,45Z" />
+        <!-- rambut sisi kanan -->
+        <path
+            android:fillColor="#1B1B33"
+            android:pathData="M70,45C74,54 74,64 71,73C75,64 75,53 70,45Z" />
+
+        <!-- blush pipi -->
+        <path
+            android:fillAlpha="0.7"
+            android:fillColor="#F7A8B8"
+            android:pathData="M39.8,62a3.2,1.7 0 1,0 6.4,0a3.2,1.7 0 1,0 -6.4,0Z" />
+        <path
+            android:fillAlpha="0.7"
+            android:fillColor="#F7A8B8"
+            android:pathData="M61.8,62a3.2,1.7 0 1,0 6.4,0a3.2,1.7 0 1,0 -6.4,0Z" />
+
+        <!-- alis -->
+        <path
+            android:fillColor="#00000000"
+            android:pathData="M42,47C45,45 47,45 49,46"
+            android:strokeColor="#4A3030"
+            android:strokeLineCap="round"
+            android:strokeWidth="1.3" />
+        <path
+            android:fillColor="#00000000"
+            android:pathData="M59,46C61,45 63,45 66,47"
+            android:strokeColor="#4A3030"
+            android:strokeLineCap="round"
+            android:strokeWidth="1.3" />
+
+        <!-- mata kiri -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M40.5,57a5.2,6.1 0 1,0 10.4,0a5.2,6.1 0 1,0 -10.4,0Z" />
+        <path
+            android:fillColor="#E8A020"
+            android:pathData="M42,57.5a3.7,4.6 0 1,0 7.4,0a3.7,4.6 0 1,0 -7.4,0Z" />
+        <path
+            android:fillColor="#2A1A0A"
+            android:pathData="M43.6,57.5a1.9,2.5 0 1,0 3.8,0a1.9,2.5 0 1,0 -3.8,0Z" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M42.6,54.7a1.3,1.3 0 1,0 2.6,0a1.3,1.3 0 1,0 -2.6,0Z" />
+        <path
+            android:fillColor="#00000000"
+            android:pathData="M40.4,53.6C43,50.7 48,50.7 50.7,53.6"
+            android:strokeColor="#1B1B33"
+            android:strokeLineCap="round"
+            android:strokeWidth="1.6" />
+
+        <!-- mata kanan -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M57.1,57a5.2,6.1 0 1,0 10.4,0a5.2,6.1 0 1,0 -10.4,0Z" />
+        <path
+            android:fillColor="#E8A020"
+            android:pathData="M58.6,57.5a3.7,4.6 0 1,0 7.4,0a3.7,4.6 0 1,0 -7.4,0Z" />
+        <path
+            android:fillColor="#2A1A0A"
+            android:pathData="M60.2,57.5a1.9,2.5 0 1,0 3.8,0a1.9,2.5 0 1,0 -3.8,0Z" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M59.2,54.7a1.3,1.3 0 1,0 2.6,0a1.3,1.3 0 1,0 -2.6,0Z" />
+        <path
+            android:fillColor="#00000000"
+            android:pathData="M57.3,53.6C60,50.7 65,50.7 67.6,53.6"
+            android:strokeColor="#1B1B33"
+            android:strokeLineCap="round"
+            android:strokeWidth="1.6" />
+
+        <!-- mulut -->
+        <path
+            android:fillColor="#00000000"
+            android:pathData="M51,65.5Q54,67.6 57,65.5"
+            android:strokeColor="#C4636E"
+            android:strokeLineCap="round"
+            android:strokeWidth="1.3" />
+
+        <!-- kupu-kupu (julukan Reirin) -->
+        <path
+            android:fillColor="#F5B301"
+            android:pathData="M73,37C68.5,32.5 64.5,35.5 67.5,39.5C69.5,41.5 72,40.5 73,38.5Z" />
+        <path
+            android:fillColor="#F5B301"
+            android:pathData="M74,37C78.5,32.5 82.5,35.5 79.5,39.5C77.5,41.5 75,40.5 74,38.5Z" />
+        <path
+            android:fillColor="#FFD95E"
+            android:pathData="M73,39C69.5,42 69.5,45 71.5,45C73,45 73,43 73,41Z" />
+        <path
+            android:fillColor="#FFD95E"
+            android:pathData="M74,39C77.5,42 77.5,45 75.5,45C74,45 74,43 74,41Z" />
+        <path
+            android:fillColor="#7A5200"
+            android:pathData="M73.2,35.5L73.8,35.5L73.6,41L73.4,41Z" />
+    </group>
 </vector>

@@ -1,17 +1,17 @@
-package com.ardi.ramcleaner.ui
+package com.kidz.cleaner.ui
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.ardi.ramcleaner.backend.AccessMode
-import com.ardi.ramcleaner.backend.AppInfo
-import com.ardi.ramcleaner.backend.CleanerEngine
-import com.ardi.ramcleaner.backend.RootRunner
-import com.ardi.ramcleaner.backend.ShellRunner
-import com.ardi.ramcleaner.backend.ShizukuRunner
-import com.ardi.ramcleaner.data.Aggressiveness
-import com.ardi.ramcleaner.data.AutoMode
-import com.ardi.ramcleaner.data.SettingsStore
+import com.kidz.cleaner.backend.AccessMode
+import com.kidz.cleaner.backend.AppInfo
+import com.kidz.cleaner.backend.CleanerEngine
+import com.kidz.cleaner.backend.RootRunner
+import com.kidz.cleaner.backend.ShellRunner
+import com.kidz.cleaner.backend.ShizukuRunner
+import com.kidz.cleaner.data.Aggressiveness
+import com.kidz.cleaner.data.AutoMode
+import com.kidz.cleaner.data.SettingsStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -79,7 +79,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             settings.ramAutoMode.collect { v ->
                 _state.value = _state.value.copy(
                     ramAutoMode = v,
-                    monitorRunning = com.ardi.ramcleaner.work.RamMonitorService.isRunning,
+                    monitorRunning = com.kidz.cleaner.work.RamMonitorService.isRunning,
                 )
             }
         }
@@ -336,10 +336,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             settings.setAutoEnabled(v)
             if (v) {
-                com.ardi.ramcleaner.work.Scheduler.schedule(getApplication(), _state.value.intervalMin)
+                com.kidz.cleaner.work.Scheduler.schedule(getApplication(), _state.value.intervalMin)
                 log("Auto-clean AKTIF tiap ${_state.value.intervalMin} menit.")
             } else {
-                com.ardi.ramcleaner.work.Scheduler.cancel(getApplication())
+                com.kidz.cleaner.work.Scheduler.cancel(getApplication())
                 log("Auto-clean dimatikan.")
             }
         }
@@ -349,7 +349,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             settings.setInterval(min)
             if (_state.value.autoEnabled) {
-                com.ardi.ramcleaner.work.Scheduler.schedule(getApplication(), min)
+                com.kidz.cleaner.work.Scheduler.schedule(getApplication(), min)
             }
             log("Interval auto-clean: $min menit.")
         }
@@ -366,15 +366,15 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             settings.setRamAutoMode(m)
             val ctx = getApplication<Application>()
             if (m == AutoMode.OFF) {
-                com.ardi.ramcleaner.work.RamMonitorService.stop(ctx)
+                com.kidz.cleaner.work.RamMonitorService.stop(ctx)
                 log("Pembersih RAM otomatis: OFF")
             } else {
-                com.ardi.ramcleaner.work.RamMonitorService.start(ctx)
+                com.kidz.cleaner.work.RamMonitorService.start(ctx)
                 log("Pembersih RAM otomatis: $m")
             }
             _state.value = _state.value.copy(
                 ramAutoMode = m,
-                monitorRunning = com.ardi.ramcleaner.work.RamMonitorService.isRunning,
+                monitorRunning = com.kidz.cleaner.work.RamMonitorService.isRunning,
                 message = when (m) {
                     AutoMode.OFF -> "Pembersih RAM otomatis dimatikan"
                     AutoMode.INTERVAL -> "Otomatis tiap ${fmtInterval(_state.value.ramIntervalSec)}"
@@ -403,7 +403,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private fun restartMonitorIfNeeded() {
         val ctx = getApplication<Application>()
         if (_state.value.ramAutoMode != AutoMode.OFF) {
-            com.ardi.ramcleaner.work.RamMonitorService.start(ctx)
+            com.kidz.cleaner.work.RamMonitorService.start(ctx)
         }
     }
 

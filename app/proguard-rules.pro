@@ -5,4 +5,4 @@
 -dontwarn moe.shizuku.**
 
 # AIDL
--keep class com.ardi.ramcleaner.** { *; }
+-keep class com.kidz.cleaner.** { *; }

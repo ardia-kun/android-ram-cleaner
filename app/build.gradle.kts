@@ -4,15 +4,15 @@ plugins {
 }
 
 android {
-    namespace = "com.ardi.ramcleaner"
+    namespace = "com.kidz.cleaner"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.ardi.ramcleaner"
+        applicationId = "com.kidz.cleaner"
         minSdk = 29          // Android 10+
         targetSdk = 34
-        versionCode = 7
-        versionName = "1.6.0"
+        versionCode = 8
+        versionName = "1.7.0"
     }
 
     buildTypes {

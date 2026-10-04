@@ -1,4 +1,4 @@
-package com.ardi.ramcleaner.work
+package com.kidz.cleaner.work
 
 import android.Manifest
 import android.app.NotificationChannel

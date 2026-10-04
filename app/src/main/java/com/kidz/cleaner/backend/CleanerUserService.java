@@ -1,11 +1,11 @@
-package com.ardi.ramcleaner.backend;
+package com.kidz.cleaner.backend;
 
 import android.content.Context;
 import android.os.RemoteException;
 
 import androidx.annotation.Keep;
 
-import com.ardi.ramcleaner.ICleanerService;
+import com.kidz.cleaner.ICleanerService;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

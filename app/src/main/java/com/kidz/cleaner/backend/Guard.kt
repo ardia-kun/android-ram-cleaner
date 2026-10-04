@@ -1,4 +1,4 @@
-package com.ardi.ramcleaner.backend
+package com.kidz.cleaner.backend
 
 /**
  * Daftar paket yang TIDAK BOLEH dibekukan/di-debloat.

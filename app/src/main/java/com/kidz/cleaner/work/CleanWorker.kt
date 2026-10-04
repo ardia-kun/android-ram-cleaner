@@ -1,11 +1,11 @@
-package com.ardi.ramcleaner.work
+package com.kidz.cleaner.work
 
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.ardi.ramcleaner.backend.CleanerEngine
-import com.ardi.ramcleaner.backend.ShellRunner
-import com.ardi.ramcleaner.data.SettingsStore
+import com.kidz.cleaner.backend.CleanerEngine
+import com.kidz.cleaner.backend.ShellRunner
+import com.kidz.cleaner.data.SettingsStore
 import kotlinx.coroutines.flow.first
 
 /**

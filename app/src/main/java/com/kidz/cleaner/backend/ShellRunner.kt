@@ -1,4 +1,4 @@
-package com.ardi.ramcleaner.backend
+package com.kidz.cleaner.backend
 
 /**
  * Hasil eksekusi sebuah perintah shell.

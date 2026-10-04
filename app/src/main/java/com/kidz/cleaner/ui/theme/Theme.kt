@@ -1,4 +1,4 @@
-package com.ardi.ramcleaner.ui.theme
+package com.kidz.cleaner.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme

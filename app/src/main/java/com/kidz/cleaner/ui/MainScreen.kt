@@ -1,4 +1,4 @@
-package com.ardi.ramcleaner.ui
+package com.kidz.cleaner.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -58,10 +58,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.ardi.ramcleaner.backend.AccessMode
-import com.ardi.ramcleaner.backend.AppState
-import com.ardi.ramcleaner.data.Aggressiveness
-import com.ardi.ramcleaner.data.AutoMode
+import com.kidz.cleaner.backend.AccessMode
+import com.kidz.cleaner.backend.AppState
+import com.kidz.cleaner.data.Aggressiveness
+import com.kidz.cleaner.data.AutoMode
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -476,7 +476,7 @@ private fun SearchField(query: String, onQuery: (String) -> Unit) {
 }
 
 /** Terapkan filter pencarian pada daftar aplikasi. */
-private fun filtered(state: UiState): List<com.ardi.ramcleaner.backend.AppInfo> {
+private fun filtered(state: UiState): List<com.kidz.cleaner.backend.AppInfo> {
     val q = state.query.trim().lowercase()
     if (q.isEmpty()) return state.apps
     return state.apps.filter {

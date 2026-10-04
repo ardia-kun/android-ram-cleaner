@@ -1,4 +1,4 @@
-package com.ardi.ramcleaner.backend
+package com.kidz.cleaner.backend
 
 import java.util.concurrent.TimeUnit
 

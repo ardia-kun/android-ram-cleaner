@@ -1,4 +1,4 @@
-package com.ardi.ramcleaner.data
+package com.kidz.cleaner.data
 
 /** Mode pembersihan RAM otomatis. */
 enum class AutoMode {

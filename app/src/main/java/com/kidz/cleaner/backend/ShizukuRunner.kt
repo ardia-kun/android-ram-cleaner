@@ -1,11 +1,11 @@
-package com.ardi.ramcleaner.backend
+package com.kidz.cleaner.backend
 
 import android.content.ComponentName
 import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.os.IBinder
-import com.ardi.ramcleaner.BuildConfig
-import com.ardi.ramcleaner.ICleanerService
+import com.kidz.cleaner.BuildConfig
+import com.kidz.cleaner.ICleanerService
 import rikka.shizuku.Shizuku
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit

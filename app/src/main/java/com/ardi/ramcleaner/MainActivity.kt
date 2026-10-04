@@ -56,6 +56,10 @@ class MainActivity : ComponentActivity() {
                     onDismissMessage = vm::dismissMessage,
                     onQuery = vm::setQuery,
                     onDeepClean = vm::deepClean,
+                    onRamMode = vm::setRamAutoMode,
+                    onRamInterval = vm::setRamIntervalSec,
+                    onRamThreshold = vm::setRamThresholdPct,
+                    onRamLevel = vm::setRamAggressive,
                 )
             }
         }

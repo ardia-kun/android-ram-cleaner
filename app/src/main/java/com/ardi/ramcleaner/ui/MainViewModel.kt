@@ -9,6 +9,8 @@ import com.ardi.ramcleaner.backend.CleanerEngine
 import com.ardi.ramcleaner.backend.RootRunner
 import com.ardi.ramcleaner.backend.ShellRunner
 import com.ardi.ramcleaner.backend.ShizukuRunner
+import com.ardi.ramcleaner.data.Aggressiveness
+import com.ardi.ramcleaner.data.AutoMode
 import com.ardi.ramcleaner.data.SettingsStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,6 +45,12 @@ data class UiState(
     val autoCache: Boolean = true,
     val message: String? = null,
     val query: String = "",
+    // --- Pembersih RAM otomatis ---
+    val ramAutoMode: AutoMode = AutoMode.OFF,
+    val ramIntervalSec: Int = 300,
+    val ramThresholdPct: Int = 80,
+    val ramAggressive: Aggressiveness = Aggressiveness.MEDIUM,
+    val monitorRunning: Boolean = false,
 )
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
@@ -66,6 +74,23 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
         viewModelScope.launch {
             settings.cleanCache.collect { v -> _state.value = _state.value.copy(autoCache = v) }
+        }
+        viewModelScope.launch {
+            settings.ramAutoMode.collect { v ->
+                _state.value = _state.value.copy(
+                    ramAutoMode = v,
+                    monitorRunning = com.ardi.ramcleaner.work.RamMonitorService.isRunning,
+                )
+            }
+        }
+        viewModelScope.launch {
+            settings.ramIntervalSec.collect { v -> _state.value = _state.value.copy(ramIntervalSec = v) }
+        }
+        viewModelScope.launch {
+            settings.ramThresholdPct.collect { v -> _state.value = _state.value.copy(ramThresholdPct = v) }
+        }
+        viewModelScope.launch {
+            settings.ramAggressive.collect { v -> _state.value = _state.value.copy(ramAggressive = v) }
         }
         refreshAccess()
     }
@@ -332,6 +357,58 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     fun setAutoRam(v: Boolean) = viewModelScope.launch { settings.setCleanRam(v) }
     fun setAutoCache(v: Boolean) = viewModelScope.launch { settings.setCleanCache(v) }
+
+    // --------------------------------------------- pembersih RAM otomatis
+
+    /** Ubah mode (OFF / INTERVAL / THRESHOLD) & jalankan/hentikan service. */
+    fun setRamAutoMode(m: AutoMode) {
+        viewModelScope.launch {
+            settings.setRamAutoMode(m)
+            val ctx = getApplication<Application>()
+            if (m == AutoMode.OFF) {
+                com.ardi.ramcleaner.work.RamMonitorService.stop(ctx)
+                log("Pembersih RAM otomatis: OFF")
+            } else {
+                com.ardi.ramcleaner.work.RamMonitorService.start(ctx)
+                log("Pembersih RAM otomatis: $m")
+            }
+            _state.value = _state.value.copy(
+                ramAutoMode = m,
+                monitorRunning = com.ardi.ramcleaner.work.RamMonitorService.isRunning,
+                message = when (m) {
+                    AutoMode.OFF -> "Pembersih RAM otomatis dimatikan"
+                    AutoMode.INTERVAL -> "Otomatis tiap ${fmtInterval(_state.value.ramIntervalSec)}"
+                    AutoMode.THRESHOLD -> "Otomatis saat RAM ≥ ${_state.value.ramThresholdPct}%"
+                },
+            )
+        }
+    }
+
+    fun setRamIntervalSec(sec: Int) = viewModelScope.launch {
+        settings.setRamIntervalSec(sec)
+        restartMonitorIfNeeded()
+    }
+
+    fun setRamThresholdPct(pct: Int) = viewModelScope.launch {
+        settings.setRamThresholdPct(pct)
+        restartMonitorIfNeeded()
+    }
+
+    fun setRamAggressive(a: Aggressiveness) = viewModelScope.launch {
+        settings.setRamAggressive(a)
+        restartMonitorIfNeeded()
+    }
+
+    /** Service membaca preferensi tiap putaran, jadi cukup di-restart agar langsung pakai nilai baru. */
+    private fun restartMonitorIfNeeded() {
+        val ctx = getApplication<Application>()
+        if (_state.value.ramAutoMode != AutoMode.OFF) {
+            com.ardi.ramcleaner.work.RamMonitorService.start(ctx)
+        }
+    }
+
+    private fun fmtInterval(sec: Int): String =
+        if (sec < 60) "${sec}s" else "${sec / 60} mnt"
 
     companion object {
         /** Format byte -> teks ramah (MB/GB). */

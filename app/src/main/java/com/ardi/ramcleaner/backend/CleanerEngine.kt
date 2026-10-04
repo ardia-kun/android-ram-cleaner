@@ -2,6 +2,7 @@ package com.ardi.ramcleaner.backend
 
 import android.content.Context
 import android.content.pm.PackageManager
+import com.ardi.ramcleaner.data.Aggressiveness
 import java.util.concurrent.TimeUnit
 
 /** Status satu aplikasi terkait debloat. */
@@ -320,6 +321,53 @@ class CleanerEngine(
         val freed = if (availBefore >= 0 && availAfter >= 0)
             (availAfter - availBefore).coerceAtLeast(0) else -1
         return CleanReport(ok, skip, freed, "RAM dibebaskan")
+    }
+
+    /**
+     * Bersihkan RAM sesuai tingkat keagresifan.
+     *
+     * - LIGHT: `am kill-all` saja.
+     * - MEDIUM: kill-all + trim cache sistem.
+     * - AGGRESSIVE: kill-all + trim + force-stop app user yang masih berjalan.
+     */
+    fun clearRamByLevel(level: Aggressiveness): CleanReport {
+        val (_, before) = ramInfo()
+        val ok = ArrayList<String>()
+        val skip = ArrayList<Pair<String, String>>()
+
+        runner.exec("am kill-all")
+        ok += "am kill-all"
+
+        if (level != Aggressiveness.LIGHT) {
+            val (t, m) = trimSystemCache()
+            if (t) ok += "trim-caches" else skip += "trim-caches" to m
+        }
+
+        if (level == Aggressiveness.AGGRESSIVE) {
+            for (p in runningUserPackages()) {
+                if (Guard.isProtected(p)) continue
+                val r = runner.exec("am force-stop $p")
+                if (r.combined.contains("Error", true) || r.combined.contains("Exception", true)) {
+                    skip += p to "gagal"
+                } else {
+                    ok += p
+                }
+            }
+        }
+
+        runCatching { TimeUnit.MILLISECONDS.sleep(700) }
+        val (_, after) = ramInfo()
+        val freed = if (before >= 0 && after >= 0) (after - before).coerceAtLeast(0) else -1
+        return CleanReport(ok, skip, freed, "RAM dibersihkan (${level.name.lowercase()})")
+    }
+
+    /** Paket user (non-sistem) yang sedang berjalan. */
+    fun runningUserPackages(): List<String> {
+        val r = runner.exec("ps -A -o NAME")
+        val running = r.stdout.lines().map { it.trim() }.toHashSet()
+        return listApps(includeSystem = false)
+            .map { it.packageName }
+            .filter { it in running }
     }
 
     /** Daftar paket yang sedang berjalan (untuk pembersihan RAM selektif). */

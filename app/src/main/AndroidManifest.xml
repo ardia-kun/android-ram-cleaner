@@ -49,6 +49,13 @@
             android:exported="true"
             android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
 
+        <!-- Service pemantau RAM otomatis -->
+        <service
+            android:name=".work.RamMonitorService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
         <!-- Worker untuk auto-clean berkala -->
         <receiver
             android:name=".work.BootReceiver"

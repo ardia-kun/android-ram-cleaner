@@ -60,6 +60,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ardi.ramcleaner.backend.AccessMode
 import com.ardi.ramcleaner.backend.AppState
+import com.ardi.ramcleaner.data.Aggressiveness
+import com.ardi.ramcleaner.data.AutoMode
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,6 +86,10 @@ fun MainScreen(
     onDismissMessage: () -> Unit,
     onQuery: (String) -> Unit,
     onDeepClean: () -> Unit,
+    onRamMode: (AutoMode) -> Unit,
+    onRamInterval: (Int) -> Unit,
+    onRamThreshold: (Int) -> Unit,
+    onRamLevel: (Aggressiveness) -> Unit,
 ) {
     var tab by remember { mutableStateOf(0) }
     val snackbar = remember { SnackbarHostState() }
@@ -119,7 +125,7 @@ fun MainScreen(
                 CleanTab(state, onCleanEverything, onDeepClean, onCleanCacheSelected,
                     onToggleSelect, onSelectAll, onClearSelection, onIncludeSystem,
                     onRequestShizuku, onAutoEnabled, onInterval, onAutoRam, onAutoCache,
-                    onQuery)
+                    onQuery, onRamMode, onRamInterval, onRamThreshold, onRamLevel)
             } else {
                 FreezeTab(state, onToggleSelect, onSelectAll, onClearSelection,
                     onIncludeSystem, onRequestShizuku, onFreeze, onUnfreeze, onDebloat,
@@ -148,6 +154,10 @@ private fun CleanTab(
     onAutoRam: (Boolean) -> Unit,
     onAutoCache: (Boolean) -> Unit,
     onQuery: (String) -> Unit,
+    onRamMode: (AutoMode) -> Unit,
+    onRamInterval: (Int) -> Unit,
+    onRamThreshold: (Int) -> Unit,
+    onRamLevel: (Aggressiveness) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -165,11 +175,106 @@ private fun CleanTab(
             modifier = Modifier.fillMaxWidth(),
         ) { Text("Deep clean (RAM + trim + cache)") }
         AccessLine(state, onRequestShizuku)
+        RamAutoSection(state, onRamMode, onRamInterval, onRamThreshold, onRamLevel)
         AutoSection(state, onAutoEnabled, onInterval, onAutoRam, onAutoCache)
         AppPicker(state, onCleanCacheSelected, onToggleSelect, onSelectAll,
             onClearSelection, onIncludeSystem, onQuery)
         Spacer(Modifier.height(16.dp))
     }
+}
+
+/** Bagian "Bersihkan RAM otomatis": mode, interval/ambang, keagresifan. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RamAutoSection(
+    state: UiState,
+    onMode: (AutoMode) -> Unit,
+    onInterval: (Int) -> Unit,
+    onThreshold: (Int) -> Unit,
+    onLevel: (Aggressiveness) -> Unit,
+) {
+    var open by remember { mutableStateOf(false) }
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.fillMaxWidth().padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Bersihkan RAM otomatis", fontWeight = FontWeight.SemiBold)
+                    val sub = when (state.ramAutoMode) {
+                        AutoMode.OFF -> "Mati"
+                        AutoMode.INTERVAL -> "Tiap ${fmtInterval(state.ramIntervalSec)} · ${levelLabel(state.ramAggressive)}"
+                        AutoMode.THRESHOLD -> "Saat RAM ≥ ${state.ramThresholdPct}% · ${levelLabel(state.ramAggressive)}"
+                    }
+                    Text(sub, fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+                }
+                TextButton(onClick = { open = !open }) { Text(if (open) "Tutup" else "Atur") }
+            }
+
+            if (open) {
+                // Mode
+                Text("Mode", fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(selected = state.ramAutoMode == AutoMode.OFF,
+                        onClick = { onMode(AutoMode.OFF) }, label = { Text("Mati") })
+                    FilterChip(selected = state.ramAutoMode == AutoMode.INTERVAL,
+                        onClick = { onMode(AutoMode.INTERVAL) }, label = { Text("Interval") })
+                    FilterChip(selected = state.ramAutoMode == AutoMode.THRESHOLD,
+                        onClick = { onMode(AutoMode.THRESHOLD) }, label = { Text("Ambang %") })
+                }
+
+                // Interval (menit)
+                if (state.ramAutoMode == AutoMode.INTERVAL) {
+                    Text("Setiap berapa menit", fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf(60, 120, 300, 600, 1800).forEach { sec ->
+                            FilterChip(selected = state.ramIntervalSec == sec,
+                                onClick = { onInterval(sec) },
+                                label = { Text(fmtInterval(sec)) })
+                        }
+                    }
+                }
+
+                // Ambang %
+                if (state.ramAutoMode == AutoMode.THRESHOLD) {
+                    Text("Bersihkan saat pemakaian RAM mencapai", fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf(60, 70, 80, 90).forEach { p ->
+                            FilterChip(selected = state.ramThresholdPct == p,
+                                onClick = { onThreshold(p) }, label = { Text("$p%") })
+                        }
+                    }
+                }
+
+                // Keagresifan
+                Text("Tingkat keagresifan", fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Aggressiveness.entries.forEach { a ->
+                        FilterChip(selected = state.ramAggressive == a,
+                            onClick = { onLevel(a) }, label = { Text(levelLabel(a)) })
+                    }
+                }
+                Text(levelDesc(state.ramAggressive), fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            }
+        }
+    }
+}
+
+private fun fmtInterval(sec: Int): String =
+    if (sec < 60) "${sec}s" else "${sec / 60} mnt"
+
+private fun levelLabel(a: Aggressiveness): String = when (a) {
+    Aggressiveness.LIGHT -> "Ringan"
+    Aggressiveness.MEDIUM -> "Sedang"
+    Aggressiveness.AGGRESSIVE -> "Agresif"
+}
+
+private fun levelDesc(a: Aggressiveness): String = when (a) {
+    Aggressiveness.LIGHT -> "Hanya membunuh proses latar (paling hemat baterai)"
+    Aggressiveness.MEDIUM -> "Bunuh proses latar + buang cache sistem"
+    Aggressiveness.AGGRESSIVE -> "Bunuh proses latar + trim + tutup paksa app yang berjalan"
 }
 
 /** Lingkaran besar berisi persentase RAM terpakai. */

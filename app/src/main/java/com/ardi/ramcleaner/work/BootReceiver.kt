@@ -20,6 +20,10 @@ class BootReceiver : BroadcastReceiver() {
                 if (settings.autoEnabled.first()) {
                     Scheduler.schedule(context.applicationContext, settings.intervalMin.first())
                 }
+                // Lanjutkan pemantau RAM otomatis bila sebelumnya aktif.
+                if (settings.ramAutoMode.first() != com.ardi.ramcleaner.data.AutoMode.OFF) {
+                    RamMonitorService.start(context.applicationContext)
+                }
             } finally {
                 pending.finish()
             }

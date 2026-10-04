@@ -34,6 +34,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -81,6 +82,7 @@ fun MainScreen(
     onDebloat: () -> Unit,
     onRestore: (List<String>) -> Unit,
     onDismissMessage: () -> Unit,
+    onQuery: (String) -> Unit,
 ) {
     var tab by remember { mutableStateOf(0) }
     val snackbar = remember { SnackbarHostState() }
@@ -115,11 +117,11 @@ fun MainScreen(
             if (tab == 0) {
                 CleanTab(state, onCleanEverything, onCleanCacheSelected, onToggleSelect,
                     onSelectAll, onClearSelection, onIncludeSystem, onRequestShizuku,
-                    onAutoEnabled, onInterval, onAutoRam, onAutoCache)
+                    onAutoEnabled, onInterval, onAutoRam, onAutoCache, onQuery)
             } else {
                 FreezeTab(state, onToggleSelect, onSelectAll, onClearSelection,
                     onIncludeSystem, onRequestShizuku, onFreeze, onUnfreeze, onDebloat,
-                    onRestore)
+                    onRestore, onQuery)
             }
         }
     }
@@ -142,6 +144,7 @@ private fun CleanTab(
     onInterval: (Int) -> Unit,
     onAutoRam: (Boolean) -> Unit,
     onAutoCache: (Boolean) -> Unit,
+    onQuery: (String) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -156,7 +159,7 @@ private fun CleanTab(
         AccessLine(state, onRequestShizuku)
         AutoSection(state, onAutoEnabled, onInterval, onAutoRam, onAutoCache)
         AppPicker(state, onCleanCacheSelected, onToggleSelect, onSelectAll,
-            onClearSelection, onIncludeSystem)
+            onClearSelection, onIncludeSystem, onQuery)
         Spacer(Modifier.height(16.dp))
     }
 }
@@ -297,6 +300,7 @@ private fun AppPicker(
     onSelectAll: () -> Unit,
     onClearSelection: () -> Unit,
     onIncludeSystem: (Boolean) -> Unit,
+    onQuery: (String) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -308,6 +312,7 @@ private fun AppPicker(
         if (expanded) {
             Card(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    SearchField(state.query, onQuery)
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Checkbox(checked = state.includeSystem, onCheckedChange = onIncludeSystem)
                         Text("App sistem", fontSize = 13.sp)
@@ -323,7 +328,7 @@ private fun AppPicker(
                         ) { Text("Bersihkan cache terpilih (${state.selected.size})") }
                     }
                     HorizontalDivider()
-                    state.apps.forEach { app ->
+                    filtered(state).forEach { app ->
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                             Checkbox(
                                 checked = app.packageName in state.selected,
@@ -345,6 +350,27 @@ private fun AppPicker(
     }
 }
 
+/** Kotak pencarian aplikasi. */
+@Composable
+private fun SearchField(query: String, onQuery: (String) -> Unit) {
+    OutlinedTextField(
+        value = query,
+        onValueChange = onQuery,
+        singleLine = true,
+        label = { Text("Cari aplikasi…") },
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+/** Terapkan filter pencarian pada daftar aplikasi. */
+private fun filtered(state: UiState): List<com.ardi.ramcleaner.backend.AppInfo> {
+    val q = state.query.trim().lowercase()
+    if (q.isEmpty()) return state.apps
+    return state.apps.filter {
+        it.label.lowercase().contains(q) || it.packageName.lowercase().contains(q)
+    }
+}
+
 // ====================================================== Tab 2: Bekukan / Debloat
 
 @Composable
@@ -359,6 +385,7 @@ private fun FreezeTab(
     onUnfreeze: () -> Unit,
     onDebloat: () -> Unit,
     onRestore: (List<String>) -> Unit,
+    onQuery: (String) -> Unit,
 ) {
     val enabled = !state.busy && state.access.mode != AccessMode.NONE
     Column(
@@ -376,6 +403,8 @@ private fun FreezeTab(
             fontSize = 12.sp,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
         )
+
+        SearchField(state.query, onQuery)
 
         Row(verticalAlignment = Alignment.CenterVertically) {
             Checkbox(checked = state.includeSystem, onCheckedChange = onIncludeSystem)
@@ -408,7 +437,7 @@ private fun FreezeTab(
 
         HorizontalDivider()
 
-        state.apps.forEach { app ->
+        filtered(state).forEach { app ->
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(
                     checked = app.packageName in state.selected,

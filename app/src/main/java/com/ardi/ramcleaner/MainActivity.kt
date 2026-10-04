@@ -50,6 +50,7 @@ class MainActivity : ComponentActivity() {
                     onDebloat = vm::debloatSelected,
                     onRestore = vm::restorePackages,
                     onDismissMessage = vm::dismissMessage,
+                    onQuery = vm::setQuery,
                 )
             }
         }

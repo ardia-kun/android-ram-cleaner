@@ -42,6 +42,7 @@ data class UiState(
     val autoRam: Boolean = true,
     val autoCache: Boolean = true,
     val message: String? = null,
+    val query: String = "",
 )
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
@@ -145,6 +146,11 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     fun dismissMessage() {
         _state.value = _state.value.copy(message = null)
+    }
+
+    /** Filter pencarian daftar aplikasi (nama atau nama paket). */
+    fun setQuery(q: String) {
+        _state.value = _state.value.copy(query = q)
     }
 
     fun setIncludeSystem(v: Boolean) {

@@ -1,7 +1,6 @@
 package com.ardi.ramcleaner.backend
 
 import android.content.Context
-import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import java.util.concurrent.TimeUnit
 
@@ -40,30 +39,39 @@ class CleanerEngine(
 
     // ---------------------------------------------------------------- daftar app
 
-    /** Semua aplikasi yang punya launcher / terpasang, diurutkan nama. */
+    /**
+     * Semua aplikasi terpasang, diambil dari **adb shell `pm list packages`**
+     * (bukan API PackageManager), diurutkan berdasarkan nama.
+     *
+     * Daftar paket murni dari `pm list packages`, `-s` (sistem), dan `-d`
+     * (disabled/dibekukan). Nama tampilan (label) tetap diambil dari
+     * PackageManager agar mudah dibaca — kalau tidak tersedia, pakai nama paket.
+     */
     fun listApps(includeSystem: Boolean): List<AppInfo> {
-        // Ambil daftar sekali saja (bukan per-app) agar cepat.
+        val all = packageSet("pm list packages")
+        val system = packageSet("pm list packages -s")
         val disabled = packageSet("pm list packages -d")
 
-        val apps = pm.getInstalledApplications(PackageManager.GET_META_DATA)
-        val out = ArrayList<AppInfo>(apps.size)
-        for (ai in apps) {
-            val isSystem = (ai.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+        val out = ArrayList<AppInfo>(all.size)
+        for (pkg in all) {
+            if (pkg == context.packageName) continue
+            val isSystem = pkg in system
             if (!includeSystem && isSystem) continue
-            if (ai.packageName == context.packageName) continue
             out += AppInfo(
-                packageName = ai.packageName,
-                label = runCatching { pm.getApplicationLabel(ai).toString() }
-                    .getOrDefault(ai.packageName),
+                packageName = pkg,
+                label = labelOf(pkg),
                 isSystem = isSystem,
-                state = when {
-                    !ai.enabled || ai.packageName in disabled -> AppState.FROZEN
-                    else -> AppState.NORMAL
-                },
+                state = if (pkg in disabled) AppState.FROZEN else AppState.NORMAL,
             )
         }
         return out.sortedBy { it.label.lowercase() }
     }
+
+    /** Nama tampilan paket (label), fallback ke nama paket bila tak ada. */
+    private fun labelOf(pkg: String): String = runCatching {
+        val ai = pm.getApplicationInfo(pkg, 0)
+        pm.getApplicationLabel(ai).toString()
+    }.getOrDefault(pkg)
 
     /** Ambil himpunan nama paket dari perintah `pm list packages ...`. */
     private fun packageSet(cmd: String): Set<String> =

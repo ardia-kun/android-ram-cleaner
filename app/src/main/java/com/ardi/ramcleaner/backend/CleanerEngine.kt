@@ -226,6 +226,59 @@ class CleanerEngine(
         return CleanReport(ok, skip, freed, "Cache dibersihkan: ${ok.size}/${pkgs.size}")
     }
 
+    // ------------------------------------------------------------- deep clean
+
+    /**
+     * Minta sistem membuang cache sampai tersedia ruang tertentu:
+     * `cmd package trim-caches <size>` (Android 11+ / SDK 30).
+     *
+     * Ini pembersihan tingkat sistem (semua app sekaligus), aman, tidak
+     * menghapus data. Dipakai untuk "Deep clean".
+     */
+    fun trimSystemCache(size: String = "128G"): Pair<Boolean, String> {
+        val sdk = android.os.Build.VERSION.SDK_INT
+        if (sdk < 30) return false to "trim-caches butuh Android 11+ (SDK 30)"
+        val r = runner.exec("cmd package trim-caches $size")
+        val out = r.combined
+        return if (!out.contains("Error", true) && !out.contains("Exception", true))
+            true to "trim selesai" else false to out.take(140)
+    }
+
+    /**
+     * Deep clean: RAM (kill-all) + trim cache sistem + clear cache semua app user.
+     *
+     * Hasil digabung menjadi satu laporan. Bagian cache per-app otomatis
+     * dilewati di Android < 13 (lihat [clearCache]).
+     */
+    fun deepClean(userApps: List<String>, onProgress: (String) -> Unit = {}): CleanReport {
+        val ok = ArrayList<String>()
+        val skip = ArrayList<Pair<String, String>>()
+
+        // 1) RAM
+        onProgress("RAM")
+        val ram = clearRam()
+        ok += ram.okPackages
+        skip += ram.skipped
+
+        // 2) Trim cache sistem
+        onProgress("trim cache sistem")
+        val (trimOk, trimMsg) = trimSystemCache()
+        if (trimOk) ok += "trim-caches" else skip += "trim-caches" to trimMsg
+
+        // 3) Clear cache tiap app user (Android 13+)
+        var freed = if (ram.freedBytes >= 0) ram.freedBytes else 0L
+        if (userApps.isNotEmpty()) {
+            onProgress("cache aplikasi")
+            val cache = clearCache(userApps)
+            ok += cache.okPackages
+            skip += cache.skipped
+            if (cache.freedBytes > 0) freed += cache.freedBytes
+        }
+
+        val freedFinal = if (freed > 0) freed else -1
+        return CleanReport(ok, skip, freedFinal, "Deep clean selesai: ${ok.size} tindakan berhasil")
+    }
+
     // --------------------------------------------------------------------- RAM
 
     /** Info RAM: total & tersedia (byte). */

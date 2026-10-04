@@ -221,6 +221,24 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** Deep clean: RAM + trim cache sistem + cache semua app user. */
+    fun deepClean() {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(busy = true, message = null)
+            val apps = _state.value.apps.map { it.packageName }
+            val rep = withContext(Dispatchers.IO) { engine.deepClean(apps) }
+            val (total, avail) = withContext(Dispatchers.IO) { engine.ramInfo() }
+            _state.value = _state.value.copy(
+                busy = false, ramTotal = total, ramAvail = avail,
+                message = if (rep.freedBytes > 0)
+                    "Deep clean: ${fmt(rep.freedBytes)} dibebaskan"
+                else "Deep clean selesai",
+            )
+            log(rep.message)
+            refreshData()
+        }
+    }
+
     /** Bersihkan cache paket terpilih (Android 13+) atau semua app user. */
     fun clearCache(selectedOnly: Boolean) {
         viewModelScope.launch {

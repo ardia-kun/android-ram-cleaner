@@ -83,6 +83,7 @@ fun MainScreen(
     onRestore: (List<String>) -> Unit,
     onDismissMessage: () -> Unit,
     onQuery: (String) -> Unit,
+    onDeepClean: () -> Unit,
 ) {
     var tab by remember { mutableStateOf(0) }
     val snackbar = remember { SnackbarHostState() }
@@ -115,9 +116,10 @@ fun MainScreen(
                     text = { Text("Bekukan / Debloat") })
             }
             if (tab == 0) {
-                CleanTab(state, onCleanEverything, onCleanCacheSelected, onToggleSelect,
-                    onSelectAll, onClearSelection, onIncludeSystem, onRequestShizuku,
-                    onAutoEnabled, onInterval, onAutoRam, onAutoCache, onQuery)
+                CleanTab(state, onCleanEverything, onDeepClean, onCleanCacheSelected,
+                    onToggleSelect, onSelectAll, onClearSelection, onIncludeSystem,
+                    onRequestShizuku, onAutoEnabled, onInterval, onAutoRam, onAutoCache,
+                    onQuery)
             } else {
                 FreezeTab(state, onToggleSelect, onSelectAll, onClearSelection,
                     onIncludeSystem, onRequestShizuku, onFreeze, onUnfreeze, onDebloat,
@@ -134,6 +136,7 @@ fun MainScreen(
 private fun CleanTab(
     state: UiState,
     onCleanEverything: () -> Unit,
+    onDeepClean: () -> Unit,
     onCleanCacheSelected: () -> Unit,
     onToggleSelect: (String) -> Unit,
     onSelectAll: () -> Unit,
@@ -156,6 +159,11 @@ private fun CleanTab(
     ) {
         RamGauge(state)
         BigCleanButton(state, onCleanEverything)
+        OutlinedButton(
+            onClick = onDeepClean,
+            enabled = !state.busy && state.access.mode != AccessMode.NONE,
+            modifier = Modifier.fillMaxWidth(),
+        ) { Text("Deep clean (RAM + trim + cache)") }
         AccessLine(state, onRequestShizuku)
         AutoSection(state, onAutoEnabled, onInterval, onAutoRam, onAutoCache)
         AppPicker(state, onCleanCacheSelected, onToggleSelect, onSelectAll,

@@ -33,20 +33,45 @@ class CleanWorker(
 
         val engine = CleanerEngine(applicationContext, runner)
 
+        var freedRam = -1L
+        var freedCache = -1L
+
         if (doRam) {
-            engine.clearRam()
+            val rep = engine.clearRam()
+            freedRam = rep.freedBytes
         }
         if (doCache) {
             val userApps = engine.listApps(includeSystem = false).map { it.packageName }
             if (userApps.isNotEmpty()) {
-                engine.clearCache(userApps)
+                val rep = engine.clearCache(userApps)
+                freedCache = rep.freedBytes
             }
         }
 
         val (_, avail) = engine.ramInfo()
         settings.setLastRun(System.currentTimeMillis())
         settings.setLastFreed(avail)
+
+        // Notifikasi ringkas hasil pembersihan otomatis.
+        val parts = ArrayList<String>()
+        if (freedRam > 0) parts += "RAM ${fmt(freedRam)}"
+        if (freedCache > 0) parts += "cache ${fmt(freedCache)}"
+        val text = if (parts.isEmpty()) {
+            "Pembersihan otomatis selesai. Tersedia ${fmt(avail)}."
+        } else {
+            "Dibebaskan: ${parts.joinToString(", ")}. Tersedia ${fmt(avail)}."
+        }
+        Notifier.showResult(applicationContext, "Pembersihan otomatis", text)
+
         return Result.success()
+    }
+
+    /** Format byte → teks ramah. */
+    private fun fmt(bytes: Long): String {
+        if (bytes < 0) return "—"
+        val mb = bytes / 1024.0 / 1024.0
+        return if (mb >= 1024) String.format("%.2f GB", mb / 1024)
+        else String.format("%.0f MB", mb)
     }
 
     companion object {

@@ -28,6 +28,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         runCatching { Shizuku.addRequestPermissionResultListener(permissionListener) }
 
+        // Siapkan channel notifikasi & minta izin (Android 13+).
+        com.ardi.ramcleaner.work.Notifier.ensureChannel(this)
+        requestNotificationPermission()
+
         setContent {
             RamCleanerTheme {
                 val state by vm.state.collectAsState()
@@ -51,6 +55,7 @@ class MainActivity : ComponentActivity() {
                     onRestore = vm::restorePackages,
                     onDismissMessage = vm::dismissMessage,
                     onQuery = vm::setQuery,
+                    onDeepClean = vm::deepClean,
                 )
             }
         }
@@ -61,7 +66,17 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
     }
 
+    /** Minta izin POST_NOTIFICATIONS di Android 13+ (untuk notif hasil auto-clean). */
+    private fun requestNotificationPermission() {
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.TIRAMISU) return
+        val perm = android.Manifest.permission.POST_NOTIFICATIONS
+        if (checkSelfPermission(perm) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(arrayOf(perm), NOTIF_CODE)
+        }
+    }
+
     companion object {
         private const val SHIZUKU_CODE = 1001
+        private const val NOTIF_CODE = 1002
     }
 }

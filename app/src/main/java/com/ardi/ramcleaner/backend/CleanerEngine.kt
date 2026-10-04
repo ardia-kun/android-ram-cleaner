@@ -5,12 +5,16 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import java.util.concurrent.TimeUnit
 
+/** Status satu aplikasi terkait debloat. */
+enum class AppState { NORMAL, FROZEN, REMOVED }
+
 /** Info satu aplikasi yang bisa dibersihkan. */
 data class AppInfo(
     val packageName: String,
     val label: String,
     val isSystem: Boolean,
     val cacheBytes: Long = -1,
+    val state: AppState = AppState.NORMAL,
 )
 
 /** Ringkasan hasil pembersihan. */
@@ -36,8 +40,11 @@ class CleanerEngine(
 
     // ---------------------------------------------------------------- daftar app
 
-    /** Semua aplikasi yang punya launcher / terpasang, diurutkan cache terbesar. */
+    /** Semua aplikasi yang punya launcher / terpasang, diurutkan nama. */
     fun listApps(includeSystem: Boolean): List<AppInfo> {
+        // Ambil daftar sekali saja (bukan per-app) agar cepat.
+        val disabled = packageSet("pm list packages -d")
+
         val apps = pm.getInstalledApplications(PackageManager.GET_META_DATA)
         val out = ArrayList<AppInfo>(apps.size)
         for (ai in apps) {
@@ -49,9 +56,81 @@ class CleanerEngine(
                 label = runCatching { pm.getApplicationLabel(ai).toString() }
                     .getOrDefault(ai.packageName),
                 isSystem = isSystem,
+                state = when {
+                    !ai.enabled || ai.packageName in disabled -> AppState.FROZEN
+                    else -> AppState.NORMAL
+                },
             )
         }
         return out.sortedBy { it.label.lowercase() }
+    }
+
+    /** Ambil himpunan nama paket dari perintah `pm list packages ...`. */
+    private fun packageSet(cmd: String): Set<String> =
+        runner.exec(cmd).stdout.lines()
+            .map { it.trim() }
+            .filter { it.startsWith("package:") }
+            .map { it.removePrefix("package:") }
+            .toHashSet()
+
+    // ------------------------------------------------------ debloat & freeze
+
+    /**
+     * Bekukan (freeze) paket: `pm disable-user --user 0`.
+     *
+     * App berhenti total (tidak ada proses/service), hilang dari launcher,
+     * TAPI data & APK tetap ada — bisa di-unfreeze kapan saja.
+     */
+    fun freeze(pkg: String): Pair<Boolean, String> {
+        if (Guard.isProtected(pkg)) {
+            return false to "DILINDUNGI: ${Guard.reason(pkg)}"
+        }
+        val r = runner.exec("pm disable-user --user 0 $pkg")
+        return if (r.combined.contains("new state: disabled", true) ||
+            r.combined.contains("disabled-user", true) ||
+            r.combined.contains("disabled", true)
+        ) true to "dibekukan" else false to r.combined.take(140)
+    }
+
+    /** Aktifkan kembali paket yang dibekukan: `pm enable`. */
+    fun unfreeze(pkg: String): Pair<Boolean, String> {
+        val r = runner.exec("pm enable --user 0 $pkg")
+        return if (r.combined.contains("new state: enabled", true) ||
+            r.combined.contains("enabled", true)
+        ) true to "diaktifkan" else false to r.combined.take(140)
+    }
+
+    /**
+     * Debloat: hapus paket untuk user saat ini: `pm uninstall --user 0`.
+     *
+     * APK tetap ada di partisi /system — bisa dikembalikan lewat [restore] tanpa
+     * download ulang. Data user dihapus (beda dengan freeze yang data-nya utuh).
+     */
+    fun debloat(pkg: String): Pair<Boolean, String> {
+        if (Guard.isProtected(pkg)) {
+            return false to "DILINDUNGI: ${Guard.reason(pkg)}"
+        }
+        val r = runner.exec("pm uninstall --user 0 $pkg")
+        return if (r.combined.contains("success", true)) true to "dihapus"
+        else false to r.combined.take(140)
+    }
+
+    /** Kembalikan paket yang sudah di-debloat: `cmd package install-existing`. */
+    fun restore(pkg: String): Pair<Boolean, String> {
+        val r = runner.exec("cmd package install-existing --user 0 $pkg")
+        return if (r.combined.contains("installed", true)) true to "dikembalikan"
+        else false to r.combined.take(140)
+    }
+
+    /**
+     * Daftar paket yang sudah di-debloat (ada di /system tapi tidak terpasang
+     * untuk user ini). Diambil dari selisih `pm list packages -u` dan
+     * `pm list packages` — sekali perintah, cepat.
+     */
+    fun removedPackages(): List<String> {
+        val all = packageSet("pm list packages -u")
+        val installed = packageSet("pm list packages")
+        return (all - installed).sorted()
     }
 
     // ------------------------------------------------------------------- cache

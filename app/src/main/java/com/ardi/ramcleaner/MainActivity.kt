@@ -45,6 +45,11 @@ class MainActivity : ComponentActivity() {
                     onInterval = vm::setInterval,
                     onAutoRam = vm::setAutoRam,
                     onAutoCache = vm::setAutoCache,
+                    onFreeze = vm::freezeSelected,
+                    onUnfreeze = vm::unfreezeSelected,
+                    onDebloat = vm::debloatSelected,
+                    onRestore = vm::restorePackages,
+                    onDismissMessage = vm::dismissMessage,
                 )
             }
         }

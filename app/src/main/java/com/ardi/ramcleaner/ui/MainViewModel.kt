@@ -33,6 +33,7 @@ data class UiState(
     val ramTotal: Long = -1,
     val ramAvail: Long = -1,
     val apps: List<AppInfo> = emptyList(),
+    val removedApps: List<String> = emptyList(),
     val selected: Set<String> = emptySet(),
     val includeSystem: Boolean = false,
     val busy: Boolean = false,
@@ -40,6 +41,7 @@ data class UiState(
     val intervalMin: Int = 180,
     val autoRam: Boolean = true,
     val autoCache: Boolean = true,
+    val message: String? = null,
 )
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
@@ -132,9 +134,17 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             val apps = withContext(Dispatchers.IO) {
                 engine.listApps(includeSystem = _state.value.includeSystem)
             }
-            _state.value = _state.value.copy(ramTotal = total, ramAvail = avail, apps = apps, busy = false)
-            log("${apps.size} aplikasi dimuat. RAM tersedia ${fmt(avail)} / ${fmt(total)}.")
+            val removed = withContext(Dispatchers.IO) { engine.removedPackages() }
+            _state.value = _state.value.copy(
+                ramTotal = total, ramAvail = avail, apps = apps,
+                removedApps = removed, busy = false,
+            )
+            log("${apps.size} aplikasi dimuat, ${removed.size} di-debloat. RAM ${fmt(avail)}/${fmt(total)}.")
         }
+    }
+
+    fun dismissMessage() {
+        _state.value = _state.value.copy(message = null)
     }
 
     fun setIncludeSystem(v: Boolean) {
@@ -224,6 +234,49 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             log(rep.message)
             if (rep.freedBytes >= 0) log("Ruang dibebaskan: ${fmt(rep.freedBytes)} ✔")
             rep.skipped.take(5).forEach { (p, m) -> log("  dilewati $p: $m") }
+            refreshData()
+        }
+    }
+
+    // ------------------------------------------------------- debloat & freeze
+
+    /** Bekukan paket terpilih (data tetap aman). */
+    fun freezeSelected() = runBatch("Bekukan", _state.value.selected.toList()) { engine.freeze(it) }
+
+    /** Aktifkan kembali paket terpilih. */
+    fun unfreezeSelected() = runBatch("Aktifkan", _state.value.selected.toList()) { engine.unfreeze(it) }
+
+    /** Debloat (hapus untuk user) paket terpilih — APK tetap bisa dipulihkan. */
+    fun debloatSelected() = runBatch("Debloat", _state.value.selected.toList()) { engine.debloat(it) }
+
+    /** Kembalikan paket yang sudah di-debloat. */
+    fun restorePackages(pkgs: List<String>) = runBatch("Pulihkan", pkgs) { engine.restore(it) }
+
+    /** Jalankan aksi ke banyak paket, lalu tampilkan ringkasannya. */
+    private fun runBatch(
+        label: String,
+        pkgs: List<String>,
+        action: (String) -> Pair<Boolean, String>,
+    ) {
+        if (pkgs.isEmpty()) {
+            _state.value = _state.value.copy(message = "Tidak ada aplikasi terpilih.")
+            return
+        }
+        viewModelScope.launch {
+            _state.value = _state.value.copy(busy = true, message = null)
+            val ok = ArrayList<String>()
+            val fail = ArrayList<String>()
+            for (p in pkgs) {
+                val (good, _) = withContext(Dispatchers.IO) { action(p) }
+                if (good) ok += p else fail += p
+            }
+            _state.value = _state.value.copy(
+                busy = false,
+                selected = emptySet(),
+                message = "$label: ${ok.size} berhasil" +
+                    if (fail.isNotEmpty()) ", ${fail.size} gagal/dilindungi" else "",
+            )
+            log("$label → ${ok.size} ok, ${fail.size} gagal")
             refreshData()
         }
     }

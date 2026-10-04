@@ -16,8 +16,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -31,11 +35,16 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,6 +58,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ardi.ramcleaner.backend.AccessMode
+import com.ardi.ramcleaner.backend.AppState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,8 +76,24 @@ fun MainScreen(
     onInterval: (Int) -> Unit,
     onAutoRam: (Boolean) -> Unit,
     onAutoCache: (Boolean) -> Unit,
+    onFreeze: () -> Unit,
+    onUnfreeze: () -> Unit,
+    onDebloat: () -> Unit,
+    onRestore: (List<String>) -> Unit,
+    onDismissMessage: () -> Unit,
 ) {
+    var tab by remember { mutableStateOf(0) }
+    val snackbar = remember { SnackbarHostState() }
+
+    LaunchedEffect(state.message) {
+        state.message?.let {
+            snackbar.showSnackbar(it)
+            onDismissMessage()
+        }
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             TopAppBar(
                 title = { Text("Pembersih", fontWeight = FontWeight.Bold) },
@@ -79,23 +105,59 @@ fun MainScreen(
             )
         }
     ) { pad ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(pad)
-                .verticalScroll(rememberScrollState())
-                .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            RamGauge(state)
-            BigCleanButton(state, onCleanEverything)
-            AccessLine(state, onRequestShizuku)
-            AutoSection(state, onAutoEnabled, onInterval, onAutoRam, onAutoCache)
-            AppPicker(state, onCleanCacheSelected, onToggleSelect, onSelectAll,
-                onClearSelection, onIncludeSystem)
-            Spacer(Modifier.height(16.dp))
+        Column(Modifier.fillMaxSize().padding(pad)) {
+            TabRow(selectedTabIndex = tab) {
+                Tab(selected = tab == 0, onClick = { tab = 0 },
+                    text = { Text("Bersihkan") })
+                Tab(selected = tab == 1, onClick = { tab = 1 },
+                    text = { Text("Bekukan / Debloat") })
+            }
+            if (tab == 0) {
+                CleanTab(state, onCleanEverything, onCleanCacheSelected, onToggleSelect,
+                    onSelectAll, onClearSelection, onIncludeSystem, onRequestShizuku,
+                    onAutoEnabled, onInterval, onAutoRam, onAutoCache)
+            } else {
+                FreezeTab(state, onToggleSelect, onSelectAll, onClearSelection,
+                    onIncludeSystem, onRequestShizuku, onFreeze, onUnfreeze, onDebloat,
+                    onRestore)
+            }
         }
+    }
+}
+
+// =============================================================== Tab 1: Bersihkan
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CleanTab(
+    state: UiState,
+    onCleanEverything: () -> Unit,
+    onCleanCacheSelected: () -> Unit,
+    onToggleSelect: (String) -> Unit,
+    onSelectAll: () -> Unit,
+    onClearSelection: () -> Unit,
+    onIncludeSystem: (Boolean) -> Unit,
+    onRequestShizuku: () -> Unit,
+    onAutoEnabled: (Boolean) -> Unit,
+    onInterval: (Int) -> Unit,
+    onAutoRam: (Boolean) -> Unit,
+    onAutoCache: (Boolean) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        RamGauge(state)
+        BigCleanButton(state, onCleanEverything)
+        AccessLine(state, onRequestShizuku)
+        AutoSection(state, onAutoEnabled, onInterval, onAutoRam, onAutoCache)
+        AppPicker(state, onCleanCacheSelected, onToggleSelect, onSelectAll,
+            onClearSelection, onIncludeSystem)
+        Spacer(Modifier.height(16.dp))
     }
 }
 
@@ -280,5 +342,112 @@ private fun AppPicker(
                 }
             }
         }
+    }
+}
+
+// ====================================================== Tab 2: Bekukan / Debloat
+
+@Composable
+private fun FreezeTab(
+    state: UiState,
+    onToggleSelect: (String) -> Unit,
+    onSelectAll: () -> Unit,
+    onClearSelection: () -> Unit,
+    onIncludeSystem: (Boolean) -> Unit,
+    onRequestShizuku: () -> Unit,
+    onFreeze: () -> Unit,
+    onUnfreeze: () -> Unit,
+    onDebloat: () -> Unit,
+    onRestore: (List<String>) -> Unit,
+) {
+    val enabled = !state.busy && state.access.mode != AccessMode.NONE
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        AccessLine(state, onRequestShizuku)
+
+        Text(
+            "Bekukan = app berhenti total tapi data tetap aman (bisa diaktifkan lagi).\n" +
+                "Debloat = hapus untuk user ini; APK tetap di sistem dan bisa dipulihkan.",
+            fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+        )
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Checkbox(checked = state.includeSystem, onCheckedChange = onIncludeSystem)
+            Text("Tampilkan app sistem", fontSize = 13.sp)
+            Spacer(Modifier.weight(1f))
+            TextButton(onClick = onSelectAll) { Text("Semua") }
+            TextButton(onClick = onClearSelection) { Text("Kosong") }
+        }
+
+        if (state.selected.isNotEmpty()) {
+            Text("${state.selected.size} aplikasi dipilih", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = onFreeze, enabled = enabled) {
+                    Icon(Icons.Filled.Lock, contentDescription = null)
+                    Spacer(Modifier.width(6.dp))
+                    Text("Bekukan")
+                }
+                OutlinedButton(onClick = onUnfreeze, enabled = enabled) {
+                    Icon(Icons.Filled.LockOpen, contentDescription = null)
+                    Spacer(Modifier.width(6.dp))
+                    Text("Aktifkan")
+                }
+            }
+            OutlinedButton(onClick = onDebloat, enabled = enabled, modifier = Modifier.fillMaxWidth()) {
+                Icon(Icons.Filled.DeleteForever, contentDescription = null)
+                Spacer(Modifier.width(6.dp))
+                Text("Debloat (hapus untuk user)")
+            }
+        }
+
+        HorizontalDivider()
+
+        state.apps.forEach { app ->
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(
+                    checked = app.packageName in state.selected,
+                    onCheckedChange = { onToggleSelect(app.packageName) },
+                )
+                Column(Modifier.weight(1f)) {
+                    Text(app.label, fontSize = 14.sp)
+                    Text(app.packageName, fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                }
+                if (app.state == AppState.FROZEN) {
+                    Text("dibekukan", fontSize = 11.sp, color = Color(0xFFF59E0B),
+                        fontWeight = FontWeight.SemiBold)
+                }
+            }
+        }
+
+        if (state.removedApps.isNotEmpty()) {
+            HorizontalDivider()
+            Text("Dipulihkan (${state.removedApps.size})", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+            Text("Paket yang sudah di-debloat. Tekan untuk memulihkan.",
+                fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+            state.removedApps.forEach { pkg ->
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(pkg, fontSize = 12.sp, modifier = Modifier.weight(1f))
+                    TextButton(onClick = { onRestore(listOf(pkg)) }) {
+                        Icon(Icons.Filled.Restore, contentDescription = null)
+                        Spacer(Modifier.width(4.dp))
+                        Text("Pulihkan")
+                    }
+                }
+            }
+            OutlinedButton(
+                onClick = { onRestore(state.removedApps) },
+                enabled = enabled,
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Pulihkan semua") }
+        }
+
+        Spacer(Modifier.height(16.dp))
     }
 }

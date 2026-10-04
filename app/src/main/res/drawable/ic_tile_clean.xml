@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ikon tombol Quick Settings: kilau pembersih. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="#FFFFFF">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M12,2L13.6,7.4L19,9L13.6,10.6L12,16L10.4,10.6L5,9L10.4,7.4Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M18.5,14L19.4,16.6L22,17.5L19.4,18.4L18.5,21L17.6,18.4L15,17.5L17.6,16.6Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M5.5,14.5L6.2,16.3L8,17L6.2,17.7L5.5,19.5L4.8,17.7L3,17L4.8,16.3Z" />
+</vector>

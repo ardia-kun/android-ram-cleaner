@@ -28,6 +28,12 @@ class SettingsStore(private val context: Context) {
         val RAM_INTERVAL_SEC = intPreferencesKey("ram_interval_sec")     // detik
         val RAM_THRESHOLD_PCT = intPreferencesKey("ram_threshold_pct")   // %
         val RAM_AGGRESSIVE = stringPreferencesKey("ram_aggressive")      // LIGHT/MEDIUM/AGGRESSIVE
+
+        // --- Jadwal malam ---
+        val NIGHT_SCHEDULE = stringPreferencesKey("night_schedule")      // OFF/SCREEN_OFF/SCHEDULED
+        val NIGHT_HOUR = intPreferencesKey("night_hour")                 // 0..23
+        val NIGHT_MINUTE = intPreferencesKey("night_minute")             // 0..59
+        val NIGHT_LAST_DAY = longPreferencesKey("night_last_day")        // epoch day terakhir dijalankan
     }
 
     val autoEnabled: Flow<Boolean> = context.dataStore.data.map { it[Keys.AUTO_ENABLED] ?: false }
@@ -44,6 +50,12 @@ class SettingsStore(private val context: Context) {
     val ramAggressive: Flow<Aggressiveness> =
         context.dataStore.data.map { Aggressiveness.from(it[Keys.RAM_AGGRESSIVE]) }
 
+    val nightSchedule: Flow<NightSchedule> =
+        context.dataStore.data.map { NightSchedule.from(it[Keys.NIGHT_SCHEDULE]) }
+    val nightHour: Flow<Int> = context.dataStore.data.map { it[Keys.NIGHT_HOUR] ?: 2 }
+    val nightMinute: Flow<Int> = context.dataStore.data.map { it[Keys.NIGHT_MINUTE] ?: 0 }
+    val nightLastDay: Flow<Long> = context.dataStore.data.map { it[Keys.NIGHT_LAST_DAY] ?: -1L }
+
     suspend fun setAutoEnabled(v: Boolean) = context.dataStore.edit { it[Keys.AUTO_ENABLED] = v }
     suspend fun setInterval(min: Int) = context.dataStore.edit { it[Keys.INTERVAL_MIN] = min }
     suspend fun setCleanRam(v: Boolean) = context.dataStore.edit { it[Keys.CLEAN_RAM] = v }
@@ -59,4 +71,12 @@ class SettingsStore(private val context: Context) {
         context.dataStore.edit { it[Keys.RAM_THRESHOLD_PCT] = p }
     suspend fun setRamAggressive(a: Aggressiveness) =
         context.dataStore.edit { it[Keys.RAM_AGGRESSIVE] = a.name }
+
+    suspend fun setNightSchedule(s: NightSchedule) =
+        context.dataStore.edit { it[Keys.NIGHT_SCHEDULE] = s.name }
+    suspend fun setNightTime(hour: Int, minute: Int) = context.dataStore.edit {
+        it[Keys.NIGHT_HOUR] = hour
+        it[Keys.NIGHT_MINUTE] = minute
+    }
+    suspend fun setNightLastDay(day: Long) = context.dataStore.edit { it[Keys.NIGHT_LAST_DAY] = day }
 }

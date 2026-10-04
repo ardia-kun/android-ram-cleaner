@@ -280,6 +280,57 @@ class CleanerEngine(
         return CleanReport(ok, skip, freedFinal, "Deep clean selesai: ${ok.size} tindakan berhasil")
     }
 
+    // ------------------------------------------------------------ hemat baterai
+
+    /**
+     * Kunci app agar tidak berjalan di latar (hemat baterai) — TANPA membekukan.
+     *
+     * - `am set-standby-bucket <pkg> restricted` → app jarang dibangunkan sistem.
+     * - `cmd appops set <pkg> RUN_IN_BACKGROUND ignore` → cegah jalan di latar.
+     * - `cmd appops set <pkg> RUN_ANY_IN_BACKGROUND ignore` (bila didukung).
+     *
+     * App tetap bisa dibuka normal; hanya latar belakangnya yang dibatasi.
+     */
+    fun batteryRestrict(pkg: String): Pair<Boolean, String> {
+        if (Guard.isProtected(pkg)) {
+            return false to "DILINDUNGI: ${Guard.reason(pkg)}"
+        }
+        val sb = runner.exec("am set-standby-bucket $pkg restricted")
+        val ao = runner.exec("cmd appops set $pkg RUN_IN_BACKGROUND ignore")
+        runner.exec("cmd appops set $pkg RUN_ANY_IN_BACKGROUND ignore")
+        val bad = (sb.combined + ao.combined)
+        val ok = !bad.contains("Error", true) && !bad.contains("Exception", true) &&
+            !bad.contains("Unknown", true)
+        return if (ok) true to "dibatasi" else false to bad.take(140)
+    }
+
+    /** Buka kunci app: kembalikan bucket & appops ke normal. */
+    fun batteryUnrestrict(pkg: String): Pair<Boolean, String> {
+        runner.exec("am set-standby-bucket $pkg active")
+        val r = runner.exec("cmd appops set $pkg RUN_IN_BACKGROUND allow")
+        runner.exec("cmd appops set $pkg RUN_ANY_IN_BACKGROUND allow")
+        val ok = !r.combined.contains("Error", true)
+        return if (ok) true to "dibuka" else false to r.combined.take(140)
+    }
+
+    /** Bucket standby satu paket (active/working_set/frequent/rare/restricted). */
+    fun standbyBucket(pkg: String): String {
+        val r = runner.exec("am get-standby-bucket $pkg")
+        return r.combined.trim().ifBlank { "?" }
+    }
+
+    /** Daftar paket yang sedang dibekukan (`pm list packages -d`). */
+    fun frozenPackages(): List<String> = packageSet("pm list packages -d").sorted()
+
+    /** Daftar paket yang sedang dibatasi latar belakangnya. */
+    fun batteryRestrictedPackages(): Set<String> {
+        val r = runner.exec("cmd appops query-op RUN_IN_BACKGROUND ignore")
+        return r.stdout.lines()
+            .map { it.trim() }
+            .filter { it.isNotBlank() && it.contains(".") }
+            .toHashSet()
+    }
+
     // --------------------------------------------------------------------- RAM
 
     /** Info RAM: total & tersedia (byte). */

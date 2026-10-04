@@ -11,8 +11,8 @@ android {
         applicationId = "com.kidz.cleaner"
         minSdk = 29          // Android 10+
         targetSdk = 34
-        versionCode = 8
-        versionName = "1.7.0"
+        versionCode = 9
+        versionName = "1.8.0"
     }
 
     buildTypes {

@@ -60,6 +60,12 @@ class MainActivity : ComponentActivity() {
                     onRamInterval = vm::setRamIntervalSec,
                     onRamThreshold = vm::setRamThresholdPct,
                     onRamLevel = vm::setRamAggressive,
+                    onNightSchedule = vm::setNightSchedule,
+                    onNightTime = vm::setNightTime,
+                    onBatteryRestrict = vm::batteryRestrictSelected,
+                    onBatteryUnrestrict = vm::batteryUnrestrictSelected,
+                    onExport = { vm.exportBackup() },
+                    onImport = vm::importBackup,
                 )
             }
         }

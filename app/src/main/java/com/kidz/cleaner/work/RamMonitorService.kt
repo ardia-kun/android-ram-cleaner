@@ -16,6 +16,7 @@ import com.kidz.cleaner.backend.CleanerEngine
 import com.kidz.cleaner.backend.ShellRunner
 import com.kidz.cleaner.data.Aggressiveness
 import com.kidz.cleaner.data.AutoMode
+import com.kidz.cleaner.data.NightSchedule
 import com.kidz.cleaner.data.SettingsStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -45,12 +46,39 @@ class RamMonitorService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var loop: Job? = null
     private lateinit var settings: SettingsStore
+    private var screenReceiver: android.content.BroadcastReceiver? = null
 
     override fun onCreate() {
         super.onCreate()
         settings = SettingsStore(applicationContext)
         ensureChannel()
+        registerScreenReceiver()
         isRunning = true
+    }
+
+    /** Dengarkan layar mati untuk jadwal [NightSchedule.SCREEN_OFF]. */
+    private fun registerScreenReceiver() {
+        val r = object : android.content.BroadcastReceiver() {
+            override fun onReceive(c: Context?, intent: Intent?) {
+                if (intent?.action != Intent.ACTION_SCREEN_OFF) return
+                scope.launch {
+                    if (settings.nightSchedule.first() == NightSchedule.SCREEN_OFF) {
+                        val runner = ShellRunner.detect(preferRoot = false)
+                        if (runner.isReady()) {
+                            doClean(
+                                CleanerEngine(applicationContext, runner),
+                                settings.ramAggressive.first(),
+                                title = "Layar mati",
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        screenReceiver = r
+        runCatching {
+            registerReceiver(r, android.content.IntentFilter(Intent.ACTION_SCREEN_OFF))
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -72,11 +100,13 @@ class RamMonitorService : Service() {
 
         while (scope.isActive) {
             val mode = settings.ramAutoMode.first()
+            val night = settings.nightSchedule.first()
             val intervalSec = settings.ramIntervalSec.first()
             val threshold = settings.ramThresholdPct.first()
             val level = settings.ramAggressive.first()
 
-            if (mode == AutoMode.OFF) break
+            // Berhenti hanya bila TIDAK ada fitur otomatis yang aktif.
+            if (mode == AutoMode.OFF && night == NightSchedule.OFF) break
 
             val runner = ShellRunner.detect(preferRoot = false)
             if (!runner.isReady()) {
@@ -86,6 +116,23 @@ class RamMonitorService : Service() {
                 continue
             }
             val engine = CleanerEngine(applicationContext, runner)
+
+            // --- Jadwal malam pada jam tertentu ---
+            if (night == NightSchedule.SCHEDULED) {
+                val hour = settings.nightHour.first()
+                val minute = settings.nightMinute.first()
+                val cal = java.util.Calendar.getInstance()
+                val nowHour = cal.get(java.util.Calendar.HOUR_OF_DAY)
+                val nowMin = cal.get(java.util.Calendar.MINUTE)
+                val today = cal.get(java.util.Calendar.YEAR) * 1000L +
+                    cal.get(java.util.Calendar.DAY_OF_YEAR)
+                val lastDay = settings.nightLastDay.first()
+                if (nowHour == hour && nowMin >= minute && lastDay != today) {
+                    doClean(engine, level, title = "Jadwal malam")
+                    settings.setNightLastDay(today)
+                    lastCleanAt = System.currentTimeMillis()
+                }
+            }
 
             when (mode) {
                 AutoMode.INTERVAL -> {
@@ -106,12 +153,16 @@ class RamMonitorService : Service() {
                     }
                     delay(30_000)
                 }
-                AutoMode.OFF -> break
+                AutoMode.OFF -> delay(60_000)   // tetap hidup untuk jadwal malam
             }
         }
     }
 
-    private suspend fun doClean(engine: CleanerEngine, level: Aggressiveness) {
+    private suspend fun doClean(
+        engine: CleanerEngine,
+        level: Aggressiveness,
+        title: String = "RAM dibersihkan otomatis",
+    ) {
         val rep = engine.clearRamByLevel(level)
         val (total, avail) = engine.ramInfo()
         settings.setLastRun(System.currentTimeMillis())
@@ -122,7 +173,7 @@ class RamMonitorService : Service() {
         updateNotification(text)
 
         // Beri tahu pengguna (opsional, tidak mengganggu).
-        Notifier.showResult(applicationContext, "RAM dibersihkan otomatis", text)
+        Notifier.showResult(applicationContext, title, text)
     }
 
     private fun fmt(bytes: Long): String {
@@ -177,6 +228,8 @@ class RamMonitorService : Service() {
 
     override fun onDestroy() {
         isRunning = false
+        runCatching { screenReceiver?.let { unregisterReceiver(it) } }
+        screenReceiver = null
         scope.cancel()
         super.onDestroy()
     }

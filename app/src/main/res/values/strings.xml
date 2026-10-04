@@ -2,4 +2,5 @@
 <resources>
     <string name="app_name">RAM &amp; Cache Cleaner</string>
     <string name="monitor_title">Pembersih RAM aktif</string>
+    <string name="tile_label">Bersihkan</string>
 </resources>

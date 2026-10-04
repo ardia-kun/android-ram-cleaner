@@ -62,6 +62,7 @@ import com.kidz.cleaner.backend.AccessMode
 import com.kidz.cleaner.backend.AppState
 import com.kidz.cleaner.data.Aggressiveness
 import com.kidz.cleaner.data.AutoMode
+import com.kidz.cleaner.data.NightSchedule
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,6 +91,12 @@ fun MainScreen(
     onRamInterval: (Int) -> Unit,
     onRamThreshold: (Int) -> Unit,
     onRamLevel: (Aggressiveness) -> Unit,
+    onNightSchedule: (NightSchedule) -> Unit,
+    onNightTime: (Int, Int) -> Unit,
+    onBatteryRestrict: () -> Unit,
+    onBatteryUnrestrict: () -> Unit,
+    onExport: () -> Unit,
+    onImport: (String) -> Unit,
 ) {
     var tab by remember { mutableStateOf(0) }
     val snackbar = remember { SnackbarHostState() }
@@ -125,11 +132,13 @@ fun MainScreen(
                 CleanTab(state, onCleanEverything, onDeepClean, onCleanCacheSelected,
                     onToggleSelect, onSelectAll, onClearSelection, onIncludeSystem,
                     onRequestShizuku, onAutoEnabled, onInterval, onAutoRam, onAutoCache,
-                    onQuery, onRamMode, onRamInterval, onRamThreshold, onRamLevel)
+                    onQuery, onRamMode, onRamInterval, onRamThreshold, onRamLevel,
+                    onNightSchedule, onNightTime)
             } else {
                 FreezeTab(state, onToggleSelect, onSelectAll, onClearSelection,
                     onIncludeSystem, onRequestShizuku, onFreeze, onUnfreeze, onDebloat,
-                    onRestore, onQuery)
+                    onRestore, onQuery, onBatteryRestrict, onBatteryUnrestrict,
+                    onExport, onImport)
             }
         }
     }
@@ -158,6 +167,8 @@ private fun CleanTab(
     onRamInterval: (Int) -> Unit,
     onRamThreshold: (Int) -> Unit,
     onRamLevel: (Aggressiveness) -> Unit,
+    onNightSchedule: (NightSchedule) -> Unit,
+    onNightTime: (Int, Int) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -176,6 +187,7 @@ private fun CleanTab(
         ) { Text("Deep clean (RAM + trim + cache)") }
         AccessLine(state, onRequestShizuku)
         RamAutoSection(state, onRamMode, onRamInterval, onRamThreshold, onRamLevel)
+        NightSection(state, onNightSchedule, onNightTime)
         AutoSection(state, onAutoEnabled, onInterval, onAutoRam, onAutoCache)
         AppPicker(state, onCleanCacheSelected, onToggleSelect, onSelectAll,
             onClearSelection, onIncludeSystem, onQuery)
@@ -276,6 +288,110 @@ private fun levelDesc(a: Aggressiveness): String = when (a) {
     Aggressiveness.MEDIUM -> "Bunuh proses latar + buang cache sistem"
     Aggressiveness.AGGRESSIVE -> "Bunuh proses latar + trim + tutup paksa app yang berjalan"
 }
+
+/** Bagian "Jadwal malam": bersihkan saat layar mati / pada jam tertentu. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun NightSection(
+    state: UiState,
+    onSchedule: (NightSchedule) -> Unit,
+    onTime: (Int, Int) -> Unit,
+) {
+    var open by remember { mutableStateOf(false) }
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.fillMaxWidth().padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Jadwal malam", fontWeight = FontWeight.SemiBold)
+                    val sub = when (state.nightSchedule) {
+                        NightSchedule.OFF -> "Mati"
+                        NightSchedule.SCREEN_OFF -> "Setiap layar dimatikan"
+                        NightSchedule.SCHEDULED ->
+                            "Tiap hari ${fmtJam(state.nightHour, state.nightMinute)}"
+                    }
+                    Text(sub, fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+                }
+                TextButton(onClick = { open = !open }) { Text(if (open) "Tutup" else "Atur") }
+            }
+            if (open) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(selected = state.nightSchedule == NightSchedule.OFF,
+                        onClick = { onSchedule(NightSchedule.OFF) }, label = { Text("Mati") })
+                    FilterChip(selected = state.nightSchedule == NightSchedule.SCREEN_OFF,
+                        onClick = { onSchedule(NightSchedule.SCREEN_OFF) }, label = { Text("Layar mati") })
+                    FilterChip(selected = state.nightSchedule == NightSchedule.SCHEDULED,
+                        onClick = { onSchedule(NightSchedule.SCHEDULED) }, label = { Text("Jam") })
+                }
+                if (state.nightSchedule == NightSchedule.SCHEDULED) {
+                    Text("Pilih jam", fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf(0, 1, 2, 3, 4).forEach { h ->
+                            FilterChip(selected = state.nightHour == h,
+                                onClick = { onTime(h, 0) },
+                                label = { Text(fmtJam(h, 0)) })
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** Baris backup: ekspor / impor JSON. */
+@Composable
+private fun BackupRow(
+    state: UiState,
+    enabled: Boolean,
+    onExport: () -> Unit,
+    onImport: (String) -> Unit,
+) {
+    var open by remember { mutableStateOf(false) }
+    var text by remember { mutableStateOf("") }
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Backup & pulihkan", fontWeight = FontWeight.SemiBold, fontSize = 14.sp,
+                modifier = Modifier.weight(1f))
+            TextButton(onClick = { open = !open }) { Text(if (open) "Tutup" else "Buka") }
+        }
+        if (open) {
+            Text("Simpan daftar app yang dibekukan / di-debloat / dibatasi ke teks JSON, " +
+                "lalu tempel kembali untuk memulihkan (mis. setelah ganti HP).",
+                fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = onExport, enabled = enabled, modifier = Modifier.weight(1f)) {
+                    Text("Buat backup")
+                }
+            }
+            if (state.lastBackupJson != null) {
+                Text("Hasil backup (salin simpan):", fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                OutlinedTextField(
+                    value = state.lastBackupJson,
+                    onValueChange = {},
+                    readOnly = true,
+                    maxLines = 6,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            Text("Pulihkan dari JSON:", fontSize = 12.sp, fontWeight = FontWeight.Medium)
+            OutlinedTextField(
+                value = text,
+                onValueChange = { text = it },
+                placeholder = { Text("Tempel isi backup di sini") },
+                maxLines = 6,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            OutlinedButton(
+                onClick = { if (text.isNotBlank()) onImport(text) },
+                enabled = enabled && text.isNotBlank(),
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Pulihkan") }
+        }
+    }
+}
+
+private fun fmtJam(h: Int, m: Int): String = String.format("%02d:%02d", h, m)
 
 /** Lingkaran besar berisi persentase RAM terpakai. */
 @Composable
@@ -499,6 +615,10 @@ private fun FreezeTab(
     onDebloat: () -> Unit,
     onRestore: (List<String>) -> Unit,
     onQuery: (String) -> Unit,
+    onBatteryRestrict: () -> Unit,
+    onBatteryUnrestrict: () -> Unit,
+    onExport: () -> Unit,
+    onImport: (String) -> Unit,
 ) {
     val enabled = !state.busy && state.access.mode != AccessMode.NONE
     Column(
@@ -546,7 +666,26 @@ private fun FreezeTab(
                 Spacer(Modifier.width(6.dp))
                 Text("Debloat (hapus untuk user)")
             }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = onBatteryRestrict, enabled = enabled,
+                    modifier = Modifier.weight(1f)) {
+                    Text("Hemat baterai")
+                }
+                OutlinedButton(onClick = onBatteryUnrestrict, enabled = enabled,
+                    modifier = Modifier.weight(1f)) {
+                    Text("Buka batasan")
+                }
+            }
+            if (state.restrictedApps.isNotEmpty()) {
+                Text("${state.restrictedApps.size} app dibatasi latar belakangnya",
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            }
         }
+
+        // ---------------------------------------------------------- backup
+        HorizontalDivider()
+        BackupRow(state, enabled, onExport, onImport)
 
         HorizontalDivider()
 

@@ -32,3 +32,24 @@ enum class Aggressiveness {
             entries.firstOrNull { it.name == s } ?: MEDIUM
     }
 }
+
+/**
+ * Pembersihan terjadwal pada jam tertentu.
+ *
+ * Bila [SCHEDULED] dipilih, service memeriksa setiap menit; saat jam cocok
+ * (dan belum dijalankan hari ini) RAM dibersihkan otomatis.
+ */
+enum class NightSchedule {
+    OFF,
+
+    /** Bersihkan setiap kali layar dimatikan. */
+    SCREEN_OFF,
+
+    /** Bersihkan pada jam tertentu (lihat [SettingsStore.nightHour]). */
+    SCHEDULED;
+
+    companion object {
+        fun from(s: String?): NightSchedule =
+            entries.firstOrNull { it.name == s } ?: OFF
+    }
+}

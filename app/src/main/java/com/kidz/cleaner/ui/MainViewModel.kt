@@ -11,6 +11,8 @@ import com.kidz.cleaner.backend.ShellRunner
 import com.kidz.cleaner.backend.ShizukuRunner
 import com.kidz.cleaner.data.Aggressiveness
 import com.kidz.cleaner.data.AutoMode
+import com.kidz.cleaner.data.BackupStore
+import com.kidz.cleaner.data.NightSchedule
 import com.kidz.cleaner.data.SettingsStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -51,6 +53,14 @@ data class UiState(
     val ramThresholdPct: Int = 80,
     val ramAggressive: Aggressiveness = Aggressiveness.MEDIUM,
     val monitorRunning: Boolean = false,
+    // --- Jadwal malam ---
+    val nightSchedule: NightSchedule = NightSchedule.OFF,
+    val nightHour: Int = 2,
+    val nightMinute: Int = 0,
+    // --- Hemat baterai ---
+    val restrictedApps: Set<String> = emptySet(),
+    // --- Backup ---
+    val lastBackupJson: String? = null,
 )
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
@@ -91,6 +101,15 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
         viewModelScope.launch {
             settings.ramAggressive.collect { v -> _state.value = _state.value.copy(ramAggressive = v) }
+        }
+        viewModelScope.launch {
+            settings.nightSchedule.collect { v -> _state.value = _state.value.copy(nightSchedule = v) }
+        }
+        viewModelScope.launch {
+            settings.nightHour.collect { v -> _state.value = _state.value.copy(nightHour = v) }
+        }
+        viewModelScope.launch {
+            settings.nightMinute.collect { v -> _state.value = _state.value.copy(nightMinute = v) }
         }
         refreshAccess()
     }
@@ -409,6 +428,110 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun fmtInterval(sec: Int): String =
         if (sec < 60) "${sec}s" else "${sec / 60} mnt"
+
+    // ------------------------------------------------------------- jadwal malam
+
+    fun setNightSchedule(s: NightSchedule) {
+        viewModelScope.launch {
+            settings.setNightSchedule(s)
+            val ctx = getApplication<Application>()
+            if (s == NightSchedule.OFF && _state.value.ramAutoMode == AutoMode.OFF) {
+                com.kidz.cleaner.work.RamMonitorService.stop(ctx)
+            } else {
+                com.kidz.cleaner.work.RamMonitorService.start(ctx)
+            }
+            _state.value = _state.value.copy(
+                nightSchedule = s,
+                message = when (s) {
+                    NightSchedule.OFF -> "Jadwal malam dimatikan"
+                    NightSchedule.SCREEN_OFF -> "Bersihkan tiap layar mati"
+                    NightSchedule.SCHEDULED ->
+                        "Bersihkan tiap hari ${fmtJam(_state.value.nightHour, _state.value.nightMinute)}"
+                },
+            )
+        }
+    }
+
+    fun setNightTime(hour: Int, minute: Int) = viewModelScope.launch {
+        settings.setNightTime(hour, minute)
+        restartMonitorIfNeeded()
+    }
+
+    // ------------------------------------------------------------ hemat baterai
+
+    /** Batasi latar belakang app terpilih (hemat baterai). */
+    fun batteryRestrictSelected() {
+        val pkgs = _state.value.selected.toList()
+        if (pkgs.isEmpty()) return
+        runBatch("Hemat baterai", pkgs) { p -> engine.batteryRestrict(p) }
+    }
+
+    /** Buka batasan latar belakang app terpilih. */
+    fun batteryUnrestrictSelected() {
+        val pkgs = _state.value.selected.toList()
+        if (pkgs.isEmpty()) return
+        runBatch("Buka batasan", pkgs) { p -> engine.batteryUnrestrict(p) }
+    }
+
+    /** Muat ulang daftar app yang dibatasi latar belakangnya. */
+    fun refreshRestricted() {
+        viewModelScope.launch {
+            val set = withContext(Dispatchers.IO) {
+                runCatching { engine.batteryRestrictedPackages() }.getOrDefault(emptySet())
+            }
+            _state.value = _state.value.copy(restrictedApps = set)
+        }
+    }
+
+    // --------------------------------------------------------- backup & restore
+
+    /** Ekspor daftar freeze/debloat/hemat-baterai ke JSON. */
+    fun exportBackup(): String? {
+        val json = runCatching {
+            BackupStore.toJson(BackupStore.snapshot(engine))
+        }.getOrNull()
+        if (json != null) {
+            _state.value = _state.value.copy(
+                lastBackupJson = json,
+                message = "Backup dibuat (${json.length} byte)",
+            )
+        } else {
+            _state.value = _state.value.copy(message = "Gagal membuat backup")
+        }
+        return json
+    }
+
+    /** Pulihkan keadaan dari JSON: bekukan & batasi lagi paket yang tercatat. */
+    fun importBackup(json: String) {
+        val data = BackupStore.fromJson(json)
+        if (data == null) {
+            _state.value = _state.value.copy(message = "Berkas backup tidak valid")
+            return
+        }
+        viewModelScope.launch {
+            _state.value = _state.value.copy(busy = true)
+            val ok = ArrayList<String>()
+            withContext(Dispatchers.IO) {
+                for (p in data.frozen) {
+                    if (engine.freeze(p).first) ok += p
+                }
+                for (p in data.restricted) {
+                    if (engine.batteryRestrict(p).first) ok += p
+                }
+                for (p in data.removed) {
+                    if (engine.debloat(p).first) ok += p
+                }
+            }
+            _state.value = _state.value.copy(
+                busy = false,
+                message = "Backup dipulihkan: ${ok.size} tindakan diterapkan",
+            )
+            refreshData()
+        }
+    }
+
+    private fun fmtJam(h: Int, m: Int): String =
+        String.format("%02d:%02d", h, m)
 
     companion object {
         /** Format byte -> teks ramah (MB/GB). */
